@@ -1,2 +1,2 @@
-# pymperium
-A python control computer control repo
+# imperium
+A python computer control repo
