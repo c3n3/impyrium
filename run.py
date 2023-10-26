@@ -11,9 +11,7 @@ def run_py(message):
         os.system(f"python3 {message.attributes['path']}/{message.attributes['name']}")
         print("Running file")
 
-# Here we add a consumer that will receive commands with ids 0,1,2,3,4, these ids are the sameconsume
-# as defined in your registry json file.consume
-router.addConsumer([0,1,2,3,4], run_py)
+router.addConsumer([1], run_py)
 
 # We must first initialize our command registry before we can start getting input
 aitpi.addRegistry("test_json/registry.json", "test_json/foldered_commands.json")
