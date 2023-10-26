@@ -7,7 +7,7 @@ import os
 # In order to receive messages can either make an object with a consume(message) function
 # or just provide a function `def consume(message)`
 def run_py(message):
-    if (message.event == aitpi.BUTTON_RELEASE and message.attributes['type'] == 'python_commands'):
+    if (message.event == aitpi.BUTTON_PRESS and message.attributes['type'] == 'python_commands'):
         os.system(f"python3 {message.attributes['path']}/{message.attributes['name']}")
         print("Running file")
 
