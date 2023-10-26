@@ -1,0 +1,3 @@
+[submodule "aitpi"]
+	path = aitpi
+	url = git@github.com:c3n3/aitpi.git

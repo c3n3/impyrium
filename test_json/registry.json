@@ -1,0 +1,9 @@
+[
+    {
+        "id": "1",
+        "input_type": "button",
+        "path": "./test_commands",
+        "type": "python_commands",
+        "name": "run.py"
+    }
+]

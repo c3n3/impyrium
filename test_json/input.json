@@ -1,0 +1,9 @@
+[
+    {
+        "name": "Button0",
+        "type": "button",
+        "mechanism": "key_interrupt",
+        "trigger": "5",
+        "reg_link": "run.py"
+    }
+]
