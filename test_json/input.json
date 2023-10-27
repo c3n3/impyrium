@@ -2,5 +2,15 @@
     {
         "trigger": "<ctrl>+5",
         "reg_link": "run.py"
+    },
+    {
+        "trigger": "5",
+        "reg_link": "run.py"
+    },
+    {
+        "trigger": "<ctrl>+9",
+        "type": "button",
+        "mechanism": "key_interrupt",
+        "reg_link": "run.py"
     }
 ]

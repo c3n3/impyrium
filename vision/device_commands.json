@@ -1,0 +1,7 @@
+[
+    {
+        "name": "This is the name of the command",
+        "type": "command",
+        "arguments": "[unique_id, ]"
+    }
+]

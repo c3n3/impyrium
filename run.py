@@ -20,6 +20,10 @@ aitpi.addRegistry("test_json/registry.json", "test_json/foldered_commands.json")
 # Therefore, make sure you are ready to handle any input in your functions before calling this.
 aitpi.initInput("test_json/input.json")
 
+# aitpi.addInput('<ctrl>+9')
+
+# aitpi.changeInputRegLink('<ctrl>+9', 'run.py')
+
 # For synchronous input (not interrupt based) using the 'key_input' input mechanism is desireable
 # You can setup a custom progromatic form of input using this (If it is good enough, add it to AITPI!)
 while (True):
