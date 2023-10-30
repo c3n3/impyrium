@@ -1,0 +1,1 @@
+COMMAND_REGISTRY_FILE = "./cmd.json"
