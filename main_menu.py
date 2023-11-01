@@ -35,7 +35,7 @@ def sendSomething(command, args):
 
 def generateButtonCallbackFun(ctrl):
     def fun():
-        ctrl.sendFun(ctrl, {"nothing": 0})
+        ctrl.sendFun(ctrl, {ctrl.name: 0})
     return fun
 
 def getObjectMod(ctrl):
@@ -154,7 +154,7 @@ def run(index):
 class Shortcuts(QWidget):
     def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
-        wig = Selectable("Another", ['0', '1', '2'], run, self)
+        wig = Selectable("Another", ['<ctrl->', '1', '2'], run, self)
 
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
@@ -171,11 +171,8 @@ class MainWindow(QMainWindow):
             QSlider,
         ]
 
-        items = []
-        items.append(ControlsTypeSection("nothing"))
-        items.append(ControlsTypeSection("Another thing"))
-        view = ItemScrollView(items)
-        view2 = ItemScrollView([ControlsTypeSection("Other thing")])
+        # view = ItemScrollView(items)
+        view2 = ItemScrollView([ControlsTypeSection("Other thing"), ControlsTypeSection("nothing"), ControlsTypeSection("Another thing")])
 
         tabwidget = QTabWidget()
 
@@ -186,7 +183,26 @@ class MainWindow(QMainWindow):
         # to take up all the space in the window by default.
         self.setCentralWidget(tabwidget)
 
+from PyQt6.QtCore import QTimer, QThread, QEventLoop
+
+class Worker(QThread):
+    def __init__(self):
+        super().__init__()
+
+    def run(self):
+        print("Run")
+
+def function_name():
+    print("Ran")
+
+worker = Worker()
+
+timer = QTimer()
+timer.timeout.connect(worker.start)
+timer.start(1000)
+
 app = QApplication(sys.argv)
+
 window = MainWindow()
 window.show()
 
