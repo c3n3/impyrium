@@ -126,7 +126,7 @@ class ControlsTypeSection(QWidget):
             self.controlsView.hide()
 
 class ItemScrollView(QScrollArea):
-    def __init__(self, items, parent: QWidget | None = ...) -> None:
+    def __init__(self, items, parent: QWidget = None) -> None:
         super(ItemScrollView, self).__init__()
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -136,6 +136,25 @@ class ItemScrollView(QScrollArea):
         self.setWidget(widget)
         self.setWidgetResizable(True)
 
+class Selectable(QWidget):
+    def __init__(self, title, items, onSelectFun, parent: QWidget = None) -> None:
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        label = QLabel(title)
+        combo = QComboBox()
+        combo.addItems(items)
+        label.setBuddy(combo)
+        combo.currentIndexChanged.connect(onSelectFun)
+        layout.addWidget(label)
+        layout.addWidget(combo)
+
+def run(index):
+    print("Got index ", index)
+
+class Shortcuts(QWidget):
+    def __init__(self, parent: QWidget = None) -> None:
+        super().__init__(parent)
+        wig = Selectable("Another", ['0', '1', '2'], run, self)
 
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
@@ -160,7 +179,7 @@ class MainWindow(QMainWindow):
 
         tabwidget = QTabWidget()
 
-        tabwidget.addTab(view, "Section 1")
+        tabwidget.addTab(Shortcuts(), "Section 1")
         tabwidget.addTab(view2, "Section 2")
 
         # Set the central widget of the Window. Widget will expand
