@@ -1,6 +1,8 @@
 import sys
 import typing
 from PyQt6 import QtCore
+import device_thread
+import control
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -28,8 +30,6 @@ from PyQt6.QtWidgets import (
     QTabWidget,
 )
 
-import control
-
 def sendSomething(command, args):
     print("Sent", command.name, "with", args)
 
@@ -53,45 +53,41 @@ def getObjectMod(ctrl):
         return [label, ret]
     return None
 
-control.registerControl(control.Control(0, "Dumb", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb3", "Another thing", control.CONTROL_BUTTON, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
-control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
+def init():
+    control.registerControl(control.Control(0, "Dumb", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb3", "Another thing", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
+    control.registerDeviceType(control.DeviceType("Usb device", lambda: [control.Device(12)]))
 
-_currentCategory = "nothing"
-def getCurrentCategory():
-    global _currentCategory
-    global _currentCategory
-    return _currentCategory
 
 class ControlsScrollView(QWidget):
     def __init__(self, category):
         super(ControlsScrollView, self).__init__()
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-
         for c in control.getControls()[category]:
             mod = getObjectMod(c)
             if mod is None:
@@ -136,6 +132,23 @@ class ItemScrollView(QScrollArea):
         self.setWidget(widget)
         self.setWidgetResizable(True)
 
+class DeviceList(QScrollArea):
+    def __init__(self, parent: QWidget = None) -> None:
+        super(ItemScrollView, self).__init__()
+        self.widget = QWidget()
+        self.layout = QVBoxLayout(self.widget)
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.setWidget(self.widget)
+        self.setWidgetResizable(True)
+
+    def newDevices(devTypes):
+        for t in devTypes.keys():
+            for dev in t.getVisableDevices():
+                button = QPushButton()
+                button.setText(dev.uid)
+                self.layout.addWidget(button)
+
+
 class Selectable(QWidget):
     def __init__(self, title, items, onSelectFun, parent: QWidget = None) -> None:
         super().__init__(parent)
@@ -173,37 +186,25 @@ class MainWindow(QMainWindow):
 
         # view = ItemScrollView(items)
         view2 = ItemScrollView([ControlsTypeSection("Other thing"), ControlsTypeSection("nothing"), ControlsTypeSection("Another thing")])
-
+        layout = QHBoxLayout()
         tabwidget = QTabWidget()
 
         tabwidget.addTab(Shortcuts(), "Section 1")
         tabwidget.addTab(view2, "Section 2")
+        layout.addWidget(ItemScrollView([]))
 
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
         self.setCentralWidget(tabwidget)
 
-from PyQt6.QtCore import QTimer, QThread, QEventLoop
+device_thread.start()
 
-class Worker(QThread):
-    def __init__(self):
-        super().__init__()
-
-    def run(self):
-        print("Run")
-
-def function_name():
-    print("Ran")
-
-worker = Worker()
-
-timer = QTimer()
-timer.timeout.connect(worker.start)
-timer.start(1000)
+init()
 
 app = QApplication(sys.argv)
 
 window = MainWindow()
 window.show()
+
 
 app.exec()

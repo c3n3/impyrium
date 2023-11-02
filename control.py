@@ -1,4 +1,5 @@
 from aitpi.src import aitpi
+import device_thread
 import defaults
 
 CONTROL_BUTTON   = 0
@@ -12,20 +13,21 @@ CONTROL_ENUM     = 6
 BUTTON_CONTROLS = {CONTROL_BUTTON, CONTROL_FILE, CONTROL_DATE, CONTROL_ENUM, CONTROL_STRING}
 ENCODER_CONTROLS = {CONTROL_DIAL, CONTROL_SLIDER, CONTROL_ENUM}
 
-_controls = {}
+controls_ = {}
+newDeviceFun_ = None
 
 def getControls():
-    global _controls
-    return _controls
+    global controls_
+    return controls_
 
 def addToAitpi(control):
     aitpi.addCommandToRegistry(defaults.COMMAND_REGISTRY_FILE)
 
 def registerControl(control):
-    global _controls
-    if (control.category not in _controls):
-        _controls[control.category] = []
-    _controls[control.category].append(control)
+    global controls_
+    if (control.category not in controls_):
+        controls_[control.category] = []
+    controls_[control.category].append(control)
 
 class Control():
     def __init__(self, id, name, category, controlType, sendFun):
@@ -47,51 +49,81 @@ def sendSomething(command, args):
 class Device():
     def __init__(self, uid):
         self.uid = uid
-        self.reserved = False
+        self.reserveTask = None
         self.reserveTime = 0.0
+
+    def __eq__(self, other):
+        return self.uid == other.uid
+
+    def __hash__(self):
+        return self.uid.__hash__()
+
+
+def registerNewDeviceFun(fun):
+    global newDeviceFun_
+    newDeviceFun_ = fun
+
+def registerDeviceType(devType):
+    DeviceType._deviceTypes[devType.name] = devType
+    devType.scheduleDetection()
+
 
 
 # We allow the users to define devices types so that different types of devices can work
 class DeviceType():
-    _deviceTypes = []
-    _reservedDevices = {}
-    _visableDevices = {}
+    _deviceTypes = {}
 
-    def __init__(self, name, detector=None, pollRate=1, reserveDevice=None, releaseDevice=None, reservationTimeout=None, reserveCheck=None):
+    def __init__(self, name, detector=None, pollRate=1, reserveDevice=None, releaseDevice=None, autoReservationTimeout=None, reserveCheck=None):
         self.name = name
         self.detector = detector
         self.pollRate = pollRate
         self.reserveCheck = reserveCheck
         self.reserveDevice = reserveDevice
         self.releaseDevice = releaseDevice
-        self.reservationTimeout = reservationTimeout
+        self.autoReservationTimeout = autoReservationTimeout
         self.ownsDevice = False
+        self.reservedDevices = set()
+        self.visableDevices = set()
 
-    @staticmethod
-    def serviceDeviceHandling():
-        DeviceType.detectDevices()
+    def getVisableDevices(self):
+        return self.visableDevices
 
+    def getReservedDevices(self):
+        return self.reservedDevices
 
-    @staticmethod
-    def addDeviceTypeToDetect(dev):
-        DeviceType._deviceTypes.append(dev)
-
-    @staticmethod
-    def detectDevices():
-        for devType in DeviceType._deviceTypes:
-            for dev in devType.detector():
-                if type(dev) != Device:
-                    raise Exception("All detected devices need to be Device()")
-                print(f"detected a {devType.name} device")
-                if devType.reserveDevice is not None:
-                    DeviceType._visableDevices.append(dev)
+    def detect(self):
+        devices = self.detector()
+        visNew = set()
+        resNew = set()
+        for device in devices:
+            if type(device) != Device:
+                raise Exception("All detected devices need to be Device()")
+            print(f"detected a {self.name} device {device.uid}")
+            if device not in self.visableDevices:
+                if self.reserveDevice is not None:
+                    visNew.add(device)
                 else:
-                    DeviceType._reservedDevices.append(dev)
+                    resNew.add(device)
+        self.visableDevices = self.visableDevices.union(visNew)
+        self.reservedDevices = self.reservedDevices.union(resNew)
+        if (self.reservedDevices != resNew or self.visableDevices != visNew):
+            global newDeviceFun_
+            if newDeviceFun_ is not None:
+                newDeviceFun_(DeviceType._deviceTypes)
 
-    @staticmethod
-    def getVisableDevices():
-        return DeviceType._visableDevices
+        self.scheduleDetection()
 
-    @staticmethod
-    def getReservedDevices():
-        return DeviceType._reservedDevices
+    def scheduleDetection(self):
+        if self.detector is not None:
+            device_thread.scheduleItem(self.pollRate, self.detect)
+
+    def releaseDevice(self, device):
+        if (self.releaseDevice is not None):
+            self.releaseDevice(device)
+            self.reservedDevices.remove(device)
+
+    def reserveDevice(self, device):
+        if (self.reserveDevice is not None):
+            self.reserveDevice(device)
+            self.reservedDevices.add(device)
+            self.visableDevices.remove(device)
