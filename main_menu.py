@@ -1,7 +1,9 @@
 import sys
 import typing
 from PyQt6 import QtCore
+from PyQt6.QtCore import pyqtBoundSignal, QTimer, QThread, QEventLoop
 import device_thread
+import time
 import control
 
 from PyQt6.QtCore import Qt
@@ -28,7 +30,13 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QTabWidget,
+    QHBoxLayout,
 )
+
+def printAllOfType(item, t):
+    for d in dir(item):
+        if (type(item.__getattribute__(d)) == t):
+            print(d)
 
 def sendSomething(command, args):
     print("Sent", command.name, "with", args)
@@ -52,6 +60,15 @@ def getObjectMod(ctrl):
         label.setBuddy(ret)
         return [label, ret]
     return None
+
+start = time.time()
+def detectUsbs():
+    seconds = time.time() - start
+    seconds = int(seconds / 5)
+    ret = []
+    for i in range(seconds):
+        ret.append(control.Device(i))
+    return ret
 
 def init():
     control.registerControl(control.Control(0, "Dumb", "nothing", control.CONTROL_BUTTON, sendSomething))
@@ -80,7 +97,9 @@ def init():
     control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
     control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
     control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerDeviceType(control.DeviceType("Usb device", lambda: [control.Device(12)]))
+
+
+    control.registerDeviceType(control.DeviceType("Usb device", detectUsbs, releaseDeviceFun=lambda x: print("Release", x)))
 
 
 class ControlsScrollView(QWidget):
@@ -134,20 +153,59 @@ class ItemScrollView(QScrollArea):
 
 class DeviceList(QScrollArea):
     def __init__(self, parent: QWidget = None) -> None:
-        super(ItemScrollView, self).__init__()
-        self.widget = QWidget()
-        self.layout = QVBoxLayout(self.widget)
-        self.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.setWidget(self.widget)
+        super(DeviceList, self).__init__(parent)
+        self.widg = QWidget()
+        self.box = QVBoxLayout(self.widg)
+        self.box.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.setWidget(self.widg)
         self.setWidgetResizable(True)
+        self.objectNameChanged.connect(self.newDevices)
+        self.widgetList = []
 
-    def newDevices(devTypes):
+    def addWidgetToLayout(self, widget):
+        self.box.addWidget(widget)
+        self.widgetList.append(widget)
+
+    def clearWidgets(self):
+        for w in self.widgetList:
+            self.box.removeWidget(w)
+        self.widgetList.clear()
+
+    def generateReservationHandleFun(self, device, t):
+        def fun():
+            if t.reserveDeviceFun is not None:
+                t.reserveDeviceFun(device)
+        return fun
+
+    def generateReleaseHandleFun(self, device, t):
+        def fun():
+            if t.releaseDeviceFun is not None:
+                t.releaseDeviceFun(device)
+        return fun
+
+    def newDevices(self, devTypes):
+        # We simply override the argument here
+        devTypes = control.DeviceType._deviceTypes
+        self.clearWidgets()
         for t in devTypes.keys():
-            for dev in t.getVisableDevices():
-                button = QPushButton()
-                button.setText(dev.uid)
-                self.layout.addWidget(button)
-
+            if len(devTypes[t].getVisableDevices()) > 0:
+                detectedLabel = QLabel(self)
+                detectedLabel.setText("Detected:")
+                self.addWidgetToLayout(detectedLabel)
+            for dev in devTypes[t].getVisableDevices():
+                button = QPushButton(self)
+                button.clicked.connect(self.generateReservationHandleFun(dev, devTypes[t]))
+                button.setText(str(dev.uid))
+                self.addWidgetToLayout(button)
+            reservedLabel = QLabel(self)
+            reservedLabel.setText("Reserved:")
+            self.addWidgetToLayout(reservedLabel)
+            for dev in devTypes[t].getReservedDevices():
+                button = QPushButton(self)
+                button.clicked.connect(self.generateReleaseHandleFun(dev, devTypes[t]))
+                button.setText(str(dev.uid))
+                self.addWidgetToLayout(button)
+        self.widg.update()
 
 class Selectable(QWidget):
     def __init__(self, title, items, onSelectFun, parent: QWidget = None) -> None:
@@ -167,7 +225,7 @@ def run(index):
 class Shortcuts(QWidget):
     def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
-        wig = Selectable("Another", ['<ctrl->', '1', '2'], run, self)
+        wig = Selectable("Another", ['<ctrl+5>', '1', '2'], run, self)
 
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
@@ -175,30 +233,30 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Impyrium")
         self.setMinimumSize(10, 500)
-        widgets = [
-            QComboBox,
-            QDial,
-            QLabel,
-            QLineEdit,
-            QPushButton,
-            QSlider,
-        ]
 
         # view = ItemScrollView(items)
         view2 = ItemScrollView([ControlsTypeSection("Other thing"), ControlsTypeSection("nothing"), ControlsTypeSection("Another thing")])
-        layout = QHBoxLayout()
+        mainWidget = QWidget()
+        mainLayout = QHBoxLayout()
         tabwidget = QTabWidget()
 
-        tabwidget.addTab(Shortcuts(), "Section 1")
-        tabwidget.addTab(view2, "Section 2")
-        layout.addWidget(ItemScrollView([]))
+        tabwidget.addTab(Shortcuts(), "Shortcuts")
+        tabwidget.addTab(view2, "Controls")
+        devList = DeviceList(self)
+        mainLayout.addWidget(devList)
+        mainLayout.addWidget(tabwidget)
+
+        mainWidget.setLayout(mainLayout)
+        device_thread.worker_
+        control.registerNewDeviceFun(devList)
 
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
-        self.setCentralWidget(tabwidget)
+        self.setCentralWidget(mainWidget)
 
 device_thread.start()
 
+control.init()
 init()
 
 app = QApplication(sys.argv)

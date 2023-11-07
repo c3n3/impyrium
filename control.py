@@ -1,6 +1,7 @@
 from aitpi.src import aitpi
 import device_thread
 import defaults
+from PyQt6.QtCore import pyqtBoundSignal, QTimer, QThread, QEventLoop
 
 CONTROL_BUTTON   = 0
 CONTROL_SLIDER   = 1
@@ -10,18 +11,23 @@ CONTROL_STRING   = 4
 CONTROL_DATE     = 5
 CONTROL_ENUM     = 6
 
-BUTTON_CONTROLS = {CONTROL_BUTTON, CONTROL_FILE, CONTROL_DATE, CONTROL_ENUM, CONTROL_STRING}
+BUTTON_CONTROLS = {CONTROL_BUTTON, CONTROL_FILE, CONTROL_DATE, CONTROL_STRING}
 ENCODER_CONTROLS = {CONTROL_DIAL, CONTROL_SLIDER, CONTROL_ENUM}
 
 controls_ = {}
 newDeviceFun_ = None
+signal_ = None
 
 def getControls():
     global controls_
     return controls_
 
+def init():
+    aitpi.addRegistry(None)
+    aitpi.initInput(defaults.SHORTCUTS_FILE)
+
 def addToAitpi(control):
-    aitpi.addCommandToRegistry(defaults.COMMAND_REGISTRY_FILE)
+    aitpi.addCommandToRegistry(defaults.COMMAND_REGISTRY_FILE, control.name, control.id, control.category, control.controlType)
 
 def registerControl(control):
     global controls_
@@ -32,13 +38,17 @@ def registerControl(control):
 class Control():
     def __init__(self, id, name, category, controlType, sendFun):
         self.name = name
+        self.id = id
         self.controlType = controlType
         self.sendFun = sendFun
         self.category = category
+        if self.controlType in BUTTON_CONTROLS:
+            self.inputType = "button"
+        elif self.controlType in ENCODER_CONTROLS:
+            self.inputType = "encoder"
 
-
-    def consume(msg):
-        # TODO: What here?
+    def consume(self, msg):
+        print("Got message", msg)
         pass
 
 
@@ -52,6 +62,9 @@ class Device():
         self.reserveTask = None
         self.reserveTime = 0.0
 
+    def __str__(self):
+        return f"<{self.uid}>"
+
     def __eq__(self, other):
         return self.uid == other.uid
 
@@ -62,6 +75,8 @@ class Device():
 def registerNewDeviceFun(fun):
     global newDeviceFun_
     newDeviceFun_ = fun
+    global signal_
+    pass
 
 def registerDeviceType(devType):
     DeviceType._deviceTypes[devType.name] = devType
@@ -73,13 +88,13 @@ def registerDeviceType(devType):
 class DeviceType():
     _deviceTypes = {}
 
-    def __init__(self, name, detector=None, pollRate=1, reserveDevice=None, releaseDevice=None, autoReservationTimeout=None, reserveCheck=None):
+    def __init__(self, name, detector=None, pollRate=1, reserveDeviceFun=None, releaseDeviceFun=None, autoReservationTimeout=None, reserveCheck=None):
         self.name = name
         self.detector = detector
         self.pollRate = pollRate
         self.reserveCheck = reserveCheck
-        self.reserveDevice = reserveDevice
-        self.releaseDevice = releaseDevice
+        self.reserveDeviceFun = reserveDeviceFun
+        self.releaseDeviceFun = releaseDeviceFun
         self.autoReservationTimeout = autoReservationTimeout
         self.ownsDevice = False
         self.reservedDevices = set()
@@ -92,24 +107,29 @@ class DeviceType():
         return self.reservedDevices
 
     def detect(self):
+        global signal_
         devices = self.detector()
         visNew = set()
         resNew = set()
         for device in devices:
             if type(device) != Device:
                 raise Exception("All detected devices need to be Device()")
-            print(f"detected a {self.name} device {device.uid}")
             if device not in self.visableDevices:
-                if self.reserveDevice is not None:
+                if self.reserveDeviceFun is not None:
                     visNew.add(device)
                 else:
                     resNew.add(device)
+        hasNew = self.visableDevices.intersection(visNew).union(self.reservedDevices.intersection(resNew))
         self.visableDevices = self.visableDevices.union(visNew)
         self.reservedDevices = self.reservedDevices.union(resNew)
-        if (self.reservedDevices != resNew or self.visableDevices != visNew):
+        if (hasNew != visNew.union(resNew)):
             global newDeviceFun_
             if newDeviceFun_ is not None:
-                newDeviceFun_(DeviceType._deviceTypes)
+                print("This was run")
+                newDeviceFun_.objectNameChanged.emit("")
+                pass
+                # signal_.emit("DeviceType._deviceTypes")
+                # newDeviceFun_("Something")
 
         self.scheduleDetection()
 
@@ -123,7 +143,7 @@ class DeviceType():
             self.reservedDevices.remove(device)
 
     def reserveDevice(self, device):
-        if (self.reserveDevice is not None):
-            self.reserveDevice(device)
+        if (self.reserveDeviceFun is not None):
+            self.reserveDeviceFun(device)
             self.reservedDevices.add(device)
             self.visableDevices.remove(device)

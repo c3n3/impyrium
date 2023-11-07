@@ -1,1 +1,2 @@
-COMMAND_REGISTRY_FILE = "./cmd.json"
+COMMAND_REGISTRY_FILE = None
+SHORTCUTS_FILE = "./shorcuts.json"

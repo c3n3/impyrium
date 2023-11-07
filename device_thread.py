@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QTimer, QThread, QEventLoop
+from PyQt6.QtCore import pyqtSignal, QTimer, QThread, QEventLoop
 import sched 
 import time 
 
@@ -12,7 +12,7 @@ class DeviceThread(QThread):
 
     def run(self):
         while (True):
-            self.scheduler.run() 
+            self.scheduler.run()
             time.sleep(0.5)
 
 def scheduleItem(delay, fun, arguments=(), priority=0):
