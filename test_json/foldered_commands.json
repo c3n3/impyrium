@@ -2,8 +2,7 @@
     {
         "name": "python",
         "path": "./test_commands",
-        "type": "python_commands",
-        "id": "1",
+        "id": "python_commands",
         "input_type": "button"
     }
 ]

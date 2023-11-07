@@ -1,9 +1,14 @@
 [
     {
-        "id": "1",
+        "id": "python_commands",
         "input_type": "button",
         "path": "./test_commands",
-        "type": "python_commands",
+        "name": "something_else.py"
+    },
+    {
+        "id": "python_commands",
+        "input_type": "button",
+        "path": "./test_commands",
         "name": "run.py"
     }
 ]

@@ -27,7 +27,7 @@ def init():
     aitpi.initInput(defaults.SHORTCUTS_FILE)
 
 def addToAitpi(control):
-    aitpi.addCommandToRegistry(defaults.COMMAND_REGISTRY_FILE, control.name, control.id, control.category, control.controlType)
+    aitpi.addCommandToRegistry(defaults.COMMAND_REGISTRY_FILE, control.name, control.category, control.controlType)
 
 def registerControl(control):
     global controls_

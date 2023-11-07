@@ -2,10 +2,12 @@ import sys
 import typing
 from PyQt6 import QtCore
 import device_thread
+import os
 import control
 import time
 from aitpi.src import aitpi
 from aitpi.src.aitpi import router
+import threading
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -55,14 +57,15 @@ class ButtonInputControl(QWidget):
         layout = QVBoxLayout(self)
         label = QLabel(inputTrigger)
         self.combo = QComboBox()
-        self.combo.addItems(["sdf", '1'])
+        for command in self.commands:
+            self.combo.addItem( command['id'] + ": " + command['name'])
         label.setBuddy(self.combo)
         self.combo.currentIndexChanged.connect(self.updateInput)
         layout.addWidget(label)
         layout.addWidget(self.combo)
 
     def updateInput(self, index):
-        aitpi.changeInputRegLink(self.inputTrigger, None)
+        aitpi.changeInputRegLink(self.inputTrigger, self.commands[index]['id'], self.commands[index]['name'])
 
 class ItemScrollView(QScrollArea):
     def __init__(self, items, parent: QWidget = None) -> None:
@@ -93,7 +96,7 @@ if __name__ == "__main__":
             os.system(f"python3 {message.attributes['path']}/{message.attributes['name']}")
             print("Running file")
 
-    router.addConsumer([1], run_py)
+    router.addConsumer(['1'], run_py)
     aitpi.addRegistry("test_json/registry.json", "test_json/foldered_commands.json")
     aitpi.initInput("test_json/input.json")
 
@@ -110,6 +113,10 @@ if __name__ == "__main__":
             w = Aitpi(self)
             self.setCentralWidget(w)
 
+        def keyPressEvent(self, event):
+            aitpi.pyqt6KeyEvent(event)
+
+    print("Trying to run pyqt6")
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
