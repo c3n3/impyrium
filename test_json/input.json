@@ -1,6 +1,6 @@
 [
     {
         "trigger": "<ctrl>+5",
-        "reg_link": "python_commands::run.py"
+        "reg_link": "python_commands::something_else.py"
     }
 ]
