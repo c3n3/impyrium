@@ -97,7 +97,6 @@ class InputControl(QWidget, QObject):
         topLayout.addWidget(delButton)
 
     def updateInput(self, index):
-        print(index)
         if index == 0:
             aitpi.changeInputRegLink(self.inputUnit, '', '')
             return
@@ -148,13 +147,11 @@ class Aitpi(QWidget):
         if len(triggers) == 0:
             return
         if type == "button":
-            print("Adding", type, triggers)
             aitpi.addInput({'trigger': triggers[0]})
             self.updateAll()
         if len(triggers) == 1:
             return
         if type == "encoder":
-            print("Adding", type, triggers)
             aitpi.addInput({
                 'left_trigger': triggers[0],
                 'right_trigger': triggers[1],

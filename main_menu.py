@@ -5,6 +5,10 @@ from PyQt6.QtCore import pyqtBoundSignal, QTimer, QThread, QEventLoop
 import device_thread
 import time
 import control
+import os
+from aitpi_widget import Aitpi
+from aitpi.src.aitpi import router
+from aitpi.src import aitpi
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -71,6 +75,7 @@ def detectUsbs():
     return ret
 
 def init():
+    print("INITINTINTITN")
     control.registerControl(control.Control(0, "Dumb", "nothing", control.CONTROL_BUTTON, sendSomething))
     control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
     control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
@@ -98,8 +103,17 @@ def init():
     control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
     control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
 
-
     control.registerDeviceType(control.DeviceType("Usb device", detectUsbs, releaseDeviceFun=lambda x: print("Release", x)))
+
+    def run_py(message):
+        if (message.event == aitpi.BUTTON_PRESS and message.attributes['id'] == 'python_commands'):
+            os.system(f"python3 {message.attributes['path']}/{message.attributes['name']}")
+        elif (message.event in aitpi.ENCODER_VALUES and message.attributes['id'] == 'python_encoders'):
+            os.system(f"python3 {message.attributes['path']}/{message.attributes['name']} {message.event}")
+
+    router.addConsumer(['python_commands', 'python_encoders'], run_py)
+    aitpi.addRegistry("test_json/registry.json", "test_json/foldered_commands.json")
+    aitpi.initInput("test_json/input.json")
 
 
 class ControlsScrollView(QWidget):
@@ -114,9 +128,6 @@ class ControlsScrollView(QWidget):
                 continue
             for item in mod:
                 layout.addWidget(item)
-
-        # self.setWidget(self)
-        # self.setWidgetResizable(True)
 
 class ControlsTypeSection(QWidget):
     def __init__(self, category, parent: QWidget = None):
@@ -222,11 +233,6 @@ class Selectable(QWidget):
 def run(index):
     print("Got index ", index)
 
-class Shortcuts(QWidget):
-    def __init__(self, parent: QWidget = None) -> None:
-        super().__init__(parent)
-        wig = Selectable("Another", ['<ctrl+5>', '1', '2'], run, self)
-
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -240,7 +246,7 @@ class MainWindow(QMainWindow):
         mainLayout = QHBoxLayout()
         tabwidget = QTabWidget()
 
-        tabwidget.addTab(Shortcuts(), "Shortcuts")
+        tabwidget.addTab(Aitpi(self), "Shortcuts")
         tabwidget.addTab(view2, "Controls")
         devList = DeviceList(self)
         mainLayout.addWidget(devList)
@@ -253,6 +259,18 @@ class MainWindow(QMainWindow):
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
         self.setCentralWidget(mainWidget)
+
+        self.isLinux = sys.platform.startswith('linux')
+
+        def keyPressEvent(self, event):
+            if self.isLinux:
+                print("Running")
+                aitpi.pyqt6KeyPressEvent(event)
+
+        def keyReleaseEvent(self, event):
+            if self.isLinux:
+                print("Running")
+                aitpi.pyqt6KeyReleaseEvent(event)
 
 device_thread.start()
 

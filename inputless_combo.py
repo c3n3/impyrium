@@ -4,13 +4,13 @@ from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QWi
 
 
 class InputlessCombo(QComboBox):
-    def __init__(self, parent: QWidget | None = ...) -> None:
+    def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
 
         self.installEventFilter(self)
         self.view().installEventFilter(self)
 
-    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
+    def eventFilter(self, a0: QObject, a1: QEvent) -> bool:
         if a1.type() == QEvent.Type.KeyPress:
             self.parent().keyPressEvent(a1)
             return True

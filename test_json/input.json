@@ -7,14 +7,18 @@
     },
     {
         "trigger": "<ctrl>+q",
-        "reg_link": ""
+        "reg_link": "python_commands::something_else.py"
     },
     {
         "trigger": "<ctrl>+e",
-        "reg_link": ""
+        "reg_link": "python_commands::run.py"
     },
     {
         "trigger": "<ctrl>+p",
         "reg_link": "python_commands::something_else.py"
+    },
+    {
+        "trigger": "<ctrl>+5",
+        "reg_link": "python_commands::run.py"
     }
 ]

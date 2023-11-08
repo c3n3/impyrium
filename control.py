@@ -23,8 +23,8 @@ def getControls():
     return controls_
 
 def init():
-    aitpi.addRegistry(None)
-    aitpi.initInput(defaults.SHORTCUTS_FILE)
+    pass
+    # aitpi.initInput(defaults.SHORTCUTS_FILE)
 
 def addToAitpi(control):
     aitpi.addCommandToRegistry(defaults.COMMAND_REGISTRY_FILE, control.name, control.category, control.controlType)
@@ -125,7 +125,6 @@ class DeviceType():
         if (hasNew != visNew.union(resNew)):
             global newDeviceFun_
             if newDeviceFun_ is not None:
-                print("This was run")
                 newDeviceFun_.objectNameChanged.emit("")
                 pass
                 # signal_.emit("DeviceType._deviceTypes")
