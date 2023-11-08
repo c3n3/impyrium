@@ -49,22 +49,35 @@ class Selectable(QWidget):
         layout.addWidget(combo)
 
 class ButtonInputControl(QWidget):
-    def __init__(self, inputTrigger, parent: QWidget = None):
+    def __init__(self, inputUnit, parent: QWidget = None):
         super(ButtonInputControl, self).__init__(parent)
-        self.inputTrigger = inputTrigger
+        self.startReglink = inputUnit['reg_link']
+        self.inputTrigger = inputUnit['trigger']
         self.commands = aitpi.getCommands()
         print(self.commands)
         layout = QVBoxLayout(self)
-        label = QLabel(inputTrigger)
+        label = QLabel(self.inputTrigger)
         self.combo = QComboBox()
+        self.combo.addItem('<Unset>', '')
+        i = 0
         for command in self.commands:
-            self.combo.addItem( command['id'] + ": " + command['name'])
+            linkName = aitpi.InputConverter.toRegLink(command['id'], command['name'])
+            self.combo.addItem(linkName)
+            if linkName == self.startReglink:
+                self.combo.setCurrentIndex(i+1)
+            i += 1
+        self.combo.setCurrentIndex
         label.setBuddy(self.combo)
         self.combo.currentIndexChanged.connect(self.updateInput)
         layout.addWidget(label)
         layout.addWidget(self.combo)
 
     def updateInput(self, index):
+        print(index)
+        if index == 0:
+            aitpi.changeInputRegLink(self.inputTrigger, '', '')
+            return
+        index = index - 1
         aitpi.changeInputRegLink(self.inputTrigger, self.commands[index]['id'], self.commands[index]['name'])
 
 class ItemScrollView(QScrollArea):
@@ -82,21 +95,22 @@ class Aitpi(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        view2 = ItemScrollView([QLabel("Hellow"), QLabel("Hellow2"), ButtonInputControl("<ctrl>+5")])
+        inputs = aitpi.getInputs()
+        inputList = [ButtonInputControl(x) for x in inputs]
+        view2 = ItemScrollView(inputList)
         layout = QVBoxLayout()
         layout.addWidget(view2)
 
         self.setLayout(layout)
 
-
 if __name__ == "__main__":
 
     def run_py(message):
-        if (message.event == aitpi.BUTTON_PRESS and message.attributes['type'] == 'python_commands'):
+        if (message.event == aitpi.BUTTON_PRESS and message.attributes['id'] == 'python_commands'):
             os.system(f"python3 {message.attributes['path']}/{message.attributes['name']}")
             print("Running file")
 
-    router.addConsumer(['1'], run_py)
+    router.addConsumer(['python_commands'], run_py)
     aitpi.addRegistry("test_json/registry.json", "test_json/foldered_commands.json")
     aitpi.initInput("test_json/input.json")
 
@@ -112,9 +126,15 @@ if __name__ == "__main__":
             self.setMinimumSize(10, 500)
             w = Aitpi(self)
             self.setCentralWidget(w)
+            self.isLinux = sys.platform.startswith('linux')
 
         def keyPressEvent(self, event):
-            aitpi.pyqt6KeyEvent(event)
+            if self.isLinux:
+                aitpi.pyqt6KeyPressEvent(event)
+
+        def keyReleaseEvent(self, event):
+            if self.isLinux:
+                aitpi.pyqt6KeyReleaseEvent(event)
 
     print("Trying to run pyqt6")
     app = QApplication(sys.argv)

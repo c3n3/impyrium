@@ -1,6 +1,42 @@
 [
     {
         "trigger": "<ctrl>+5",
+        "reg_link": "python_commands::run.py"
+    },
+    {
+        "trigger": "1",
         "reg_link": "python_commands::something_else.py"
+    },
+    {
+        "trigger": "2",
+        "reg_link": "python_commands::run.py"
+    },
+    {
+        "trigger": "3",
+        "reg_link": "python_commands::run.py"
+    },
+    {
+        "trigger": "4",
+        "reg_link": "python_commands::something_else.py"
+    },
+    {
+        "trigger": "5",
+        "reg_link": ""
+    },
+    {
+        "trigger": "6",
+        "reg_link": ""
+    },
+    {
+        "trigger": "7",
+        "reg_link": ""
+    },
+    {
+        "trigger": "8",
+        "reg_link": ""
+    },
+    {
+        "trigger": "9",
+        "reg_link": ""
     }
 ]
