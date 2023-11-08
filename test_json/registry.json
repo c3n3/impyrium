@@ -10,5 +10,11 @@
         "input_type": "button",
         "path": "./test_commands",
         "name": "run.py"
+    },
+    {
+        "id": "python_encoders",
+        "input_type": "encoder",
+        "path": "./test_encoders",
+        "name": "test.py"
     }
 ]

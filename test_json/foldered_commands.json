@@ -4,5 +4,11 @@
         "path": "./test_commands",
         "id": "python_commands",
         "input_type": "button"
+    },
+    {
+        "name": "python",
+        "path": "./test_encoders",
+        "id": "python_encoders",
+        "input_type": "encoder"
     }
 ]

@@ -1,42 +1,20 @@
 [
     {
-        "trigger": "<ctrl>+5",
-        "reg_link": "python_commands::run.py"
+        "left_trigger": "<ctrl>+d",
+        "right_trigger": "<ctrl>+f",
+        "type": "encoder",
+        "reg_link": "python_encoders::test.py"
     },
     {
-        "trigger": "1",
+        "trigger": "<ctrl>+q",
+        "reg_link": ""
+    },
+    {
+        "trigger": "<ctrl>+e",
+        "reg_link": ""
+    },
+    {
+        "trigger": "<ctrl>+p",
         "reg_link": "python_commands::something_else.py"
-    },
-    {
-        "trigger": "2",
-        "reg_link": "python_commands::run.py"
-    },
-    {
-        "trigger": "3",
-        "reg_link": "python_commands::run.py"
-    },
-    {
-        "trigger": "4",
-        "reg_link": "python_commands::something_else.py"
-    },
-    {
-        "trigger": "5",
-        "reg_link": ""
-    },
-    {
-        "trigger": "6",
-        "reg_link": ""
-    },
-    {
-        "trigger": "7",
-        "reg_link": ""
-    },
-    {
-        "trigger": "8",
-        "reg_link": ""
-    },
-    {
-        "trigger": "9",
-        "reg_link": ""
     }
 ]
