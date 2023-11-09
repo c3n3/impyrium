@@ -42,12 +42,12 @@ def printAllOfType(item, t):
         if (type(item.__getattribute__(d)) == t):
             print(d)
 
-def sendSomething(command, args):
-    print("Sent", command.name, "with", args)
+def sendSomething(ctrl, event):
+    print("Got", ctrl, "event", event)
 
 def generateButtonCallbackFun(ctrl):
     def fun():
-        ctrl.sendFun(ctrl, {ctrl.name: 0})
+        ctrl.sendFun(ctrl)
     return fun
 
 def getObjectMod(ctrl):
@@ -55,7 +55,7 @@ def getObjectMod(ctrl):
         button = QPushButton()
         button.setMinimumHeight(25)
         button.setText(ctrl.name)
-        button.clicked.connect(generateButtonCallbackFun(ctrl))
+        button.released.connect(generateButtonCallbackFun(ctrl))
         return [button]
     if ctrl.controlType == control.CONTROL_SLIDER:
         ret = QSlider(Qt.Orientation.Horizontal)
@@ -68,41 +68,22 @@ def getObjectMod(ctrl):
 start = time.time()
 def detectUsbs():
     seconds = time.time() - start
-    seconds = int(seconds / 5)
+    seconds = min(10, int(seconds / 5))
     ret = []
     for i in range(seconds):
         ret.append(control.Device(i))
     return ret
 
 def init():
-    print("INITINTINTITN")
-    control.registerControl(control.Control(0, "Dumb", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb2", "nothing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb3", "Another thing", control.CONTROL_BUTTON, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Another thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
-    control.registerControl(control.Control(0, "Dumb4", "Other thing", control.CONTROL_SLIDER, sendSomething))
-
+    control.init()
+    control.registerControl(control.Control("nothing", "name1", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control("nothing", "name2", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control("nothing", "name3", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control("Another thing", "name4", control.CONTROL_BUTTON, sendSomething))
+    control.registerControl(control.Control("Another thing", "name5", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control("Another thing", "pool", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control("Other thing", "plop", control.CONTROL_SLIDER, sendSomething))
+    control.registerControl(control.Control("Other thing", "oplo", control.CONTROL_SLIDER, sendSomething))
     control.registerDeviceType(control.DeviceType("Usb device", detectUsbs, releaseDeviceFun=lambda x: print("Release", x)))
 
     def run_py(message):
@@ -262,19 +243,16 @@ class MainWindow(QMainWindow):
 
         self.isLinux = sys.platform.startswith('linux')
 
-        def keyPressEvent(self, event):
-            if self.isLinux:
-                print("Running")
-                aitpi.pyqt6KeyPressEvent(event)
+    def keyPressEvent(self, event):
+        if self.isLinux:
+            aitpi.pyqt6KeyPressEvent(event)
 
-        def keyReleaseEvent(self, event):
-            if self.isLinux:
-                print("Running")
-                aitpi.pyqt6KeyReleaseEvent(event)
+    def keyReleaseEvent(self, event):
+        if self.isLinux:
+            aitpi.pyqt6KeyReleaseEvent(event)
 
 device_thread.start()
 
-control.init()
 init()
 
 app = QApplication(sys.argv)

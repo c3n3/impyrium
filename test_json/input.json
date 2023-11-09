@@ -7,7 +7,7 @@
     },
     {
         "trigger": "<ctrl>+q",
-        "reg_link": "python_commands::something_else.py"
+        "reg_link": "nothing::name3"
     },
     {
         "trigger": "<ctrl>+e",
@@ -15,10 +15,14 @@
     },
     {
         "trigger": "<ctrl>+p",
-        "reg_link": "python_commands::something_else.py"
+        "reg_link": ""
     },
     {
         "trigger": "<ctrl>+5",
         "reg_link": "python_commands::run.py"
+    },
+    {
+        "trigger": "a",
+        "reg_link": "Another thing::name4"
     }
 ]

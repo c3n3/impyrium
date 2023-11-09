@@ -3,13 +3,13 @@
         "id": "python_commands",
         "input_type": "button",
         "path": "./test_commands",
-        "name": "run.py"
+        "name": "something_else.py"
     },
     {
         "id": "python_commands",
         "input_type": "button",
         "path": "./test_commands",
-        "name": "something_else.py"
+        "name": "run.py"
     },
     {
         "id": "python_encoders",

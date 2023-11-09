@@ -1,2 +1,12 @@
 __pycache__
 .json
+*.pyc
+dist/
+*.egg-info/
+__pycache__/
+temp/
+__main__.py
+*.json
+.vscode
+build
+_test_.py

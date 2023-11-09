@@ -66,6 +66,7 @@ class InputControl(QWidget, QObject):
             raise Exception("Invalid input unit")
 
         commands = aitpi.getCommands()
+        print(commands)
         topLayout = QHBoxLayout(self)
         subLayoutWidget = QWidget()
         layout = QVBoxLayout()
@@ -102,7 +103,6 @@ class InputControl(QWidget, QObject):
             return
         index = index - 1
         aitpi.changeInputRegLink(self.inputUnit, self.commands[index]['id'], self.commands[index]['name'])
-        self.update()
 
     def deleteClicked(self):
         self.deleteCallback(self)

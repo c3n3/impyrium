@@ -1,4 +1,5 @@
 from aitpi.src import aitpi
+from aitpi.src.aitpi import router
 import device_thread
 import defaults
 from PyQt6.QtCore import pyqtBoundSignal, QTimer, QThread, QEventLoop
@@ -23,34 +24,35 @@ def getControls():
     return controls_
 
 def init():
-    pass
-    # aitpi.initInput(defaults.SHORTCUTS_FILE)
+    # We use a None registry to add controls
+    aitpi.addRegistry(None)
 
 def addToAitpi(control):
-    aitpi.addCommandToRegistry(defaults.COMMAND_REGISTRY_FILE, control.name, control.category, control.controlType)
+    aitpi.addCommandToRegistry(None, control.name, control.category, control.inputType)
+    router.addConsumer([control.category], control)
 
 def registerControl(control):
     global controls_
     if (control.category not in controls_):
         controls_[control.category] = []
     controls_[control.category].append(control)
+    addToAitpi(control)
 
 class Control():
-    def __init__(self, id, name, category, controlType, sendFun):
+    def __init__(self, category, name, controlType, sendFun):
         self.name = name
-        self.id = id
         self.controlType = controlType
         self.sendFun = sendFun
         self.category = category
+        self.hasReleased = False
         if self.controlType in BUTTON_CONTROLS:
             self.inputType = "button"
         elif self.controlType in ENCODER_CONTROLS:
             self.inputType = "encoder"
 
     def consume(self, msg):
-        print("Got message", msg)
-        pass
-
+        if (msg.name == self.name):
+            self.sendFun(self, msg.event)
 
 def sendSomething(command, args):
     print("Sent", command.name, "with", args)
