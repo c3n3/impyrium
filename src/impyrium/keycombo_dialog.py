@@ -1,11 +1,10 @@
 import sys
-import typing
-from PyQt6 import QtCore
-import pynput
-from PyQt6.QtCore import Qt, QEvent, QObject
-from aitpi.src.aitpi.pyqt6_key_map import pyqt6Map
-from inputless_combo import InputlessCombo
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QComboBox, QHBoxLayout
+
+from aitpi.pyqt6_key_map import pyqt6Map
+
+from .inputless_combo import InputlessCombo
 
 class KeyComboDialog(QDialog):
     def __init__(self, doneFun, parent: QWidget = None):

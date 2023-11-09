@@ -1,2 +1,0 @@
-COMMAND_REGISTRY_FILE = None
-SHORTCUTS_FILE = "./shorcuts.json"

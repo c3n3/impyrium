@@ -1,8 +1,7 @@
-from aitpi.src import aitpi
-from aitpi.src.aitpi import router
-import device_thread
-import defaults
-from PyQt6.QtCore import pyqtBoundSignal, QTimer, QThread, QEventLoop
+import aitpi
+from aitpi import router
+
+from . import device_thread
 
 CONTROL_BUTTON   = 0
 CONTROL_SLIDER   = 1
@@ -31,6 +30,9 @@ def addToAitpi(control):
     aitpi.addCommandToRegistry(None, control.name, control.category, control.inputType)
     router.addConsumer([control.category], control)
 
+def getDevList(ctrl):
+    return []
+
 def registerControl(control):
     global controls_
     if (control.category not in controls_):
@@ -52,10 +54,7 @@ class Control():
 
     def consume(self, msg):
         if (msg.name == self.name):
-            self.sendFun(self, msg.event)
-
-def sendSomething(command, args):
-    print("Sent", command.name, "with", args)
+            self.sendFun(self, msg.event, [])
 
 # Simple helper class that defines a devices unique id, and stores reservation state
 class Device():

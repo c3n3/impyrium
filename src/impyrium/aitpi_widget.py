@@ -1,15 +1,13 @@
 import sys
-import typing
 from PyQt6 import QtCore
 from PyQt6.QtCore import pyqtBoundSignal, QTimer, QThread, QEventLoop, pyqtSignal, QObject, pyqtSlot
-import device_thread
 import os
-import control
-import time
-from aitpi.src import aitpi
-from aitpi.src.aitpi import router
-import threading
-from keycombo_dialog import KeyComboDialog
+
+import aitpi
+from aitpi import router
+
+from .keycombo_dialog import KeyComboDialog
+from . import control
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -66,7 +64,6 @@ class InputControl(QWidget, QObject):
             raise Exception("Invalid input unit")
 
         commands = aitpi.getCommands()
-        print(commands)
         topLayout = QHBoxLayout(self)
         subLayoutWidget = QWidget()
         layout = QVBoxLayout()
@@ -171,7 +168,7 @@ class Aitpi(QWidget):
     def inputControlDelete(self, control):
         self.inputList.remove(control)
         self.view.removeItem(control)
-        aitpi.removeInput(control.inputTrigger)
+        aitpi.removeInput(control.inputUnit)
         self.update()
 
 if __name__ == "__main__":

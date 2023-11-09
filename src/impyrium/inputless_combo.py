@@ -1,6 +1,5 @@
-import typing
 from PyQt6.QtCore import QEvent, QObject
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QComboBox, QHBoxLayout
+from PyQt6.QtWidgets import QWidget, QComboBox
 
 
 class InputlessCombo(QComboBox):

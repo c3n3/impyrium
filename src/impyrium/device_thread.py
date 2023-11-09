@@ -1,4 +1,4 @@
-from PyQt6.QtCore import pyqtSignal, QTimer, QThread, QEventLoop
+from PyQt6.QtCore import QThread
 import sched 
 import time 
 

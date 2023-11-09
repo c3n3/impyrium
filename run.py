@@ -1,6 +1,6 @@
 # import the base aitpi
-from aitpi.src import aitpi
-from aitpi.src.aitpi import router
+import aitpi
+from aitpi import router
 
 import os
 

@@ -1,0 +1,6 @@
+JSON_FOLDER = "./json"
+REGISTRY_FILE = "registry.json"
+INPUTS_FILE = "inputs.json"
+FOLDER_COMMANDS_FILE = "folder_commands.json"
+FOLDER_COMMANDS_TEST_COMMANDS_PATH = "./test_commands"
+FOLDER_COMMANDS_TEST_ENCODERS_PATH = "./test_encoders"
