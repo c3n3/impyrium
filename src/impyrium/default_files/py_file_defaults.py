@@ -1,7 +1,7 @@
 from .default_file import DefaultFile
 from . import defaults
 
-runFile = DefaultFile(f"run.py", 
+runFile = DefaultFile(f"run.py",
 f"""\
 import time
 import impyrium
@@ -21,7 +21,7 @@ def detectUsbs():
         ret.append(control.Device(i))
     return ret
 
-    
+
 impyrium.init("{defaults.JSON_FOLDER}/{defaults.INPUTS_FILE}", "{defaults.JSON_FOLDER}/{defaults.REGISTRY_FILE}", "{defaults.JSON_FOLDER}/{defaults.FOLDER_COMMANDS_FILE}")
 
 # Add all controls and devices
@@ -49,26 +49,26 @@ impyrium.start()
 """
 )
 
-test0 = DefaultFile(f"{defaults.FOLDER_COMMANDS_TEST_COMMANDS_PATH}/test0.py", 
+test0 = DefaultFile(f"{defaults.FOLDER_COMMANDS_TEST_COMMANDS_PATH}/test0.py",
 """
 print('The test file 0 has run')
 """
 )
 
-test1 = DefaultFile(f"{defaults.FOLDER_COMMANDS_TEST_COMMANDS_PATH}/test1.py", 
+test1 = DefaultFile(f"{defaults.FOLDER_COMMANDS_TEST_COMMANDS_PATH}/test1.py",
 """
 print('The test file 1 has run')
 """
 )
 
-encoder0 = DefaultFile(f"{defaults.FOLDER_COMMANDS_TEST_ENCODERS_PATH}/encoder0.py", 
+encoder0 = DefaultFile(f"{defaults.FOLDER_COMMANDS_TEST_ENCODERS_PATH}/encoder0.py",
 """
 import sys
 print('Encoder 0', sys.argv[1])
 """
 )
 
-encoder1 = DefaultFile(f"{defaults.FOLDER_COMMANDS_TEST_ENCODERS_PATH}/encoder1.py", 
+encoder1 = DefaultFile(f"{defaults.FOLDER_COMMANDS_TEST_ENCODERS_PATH}/encoder1.py",
 """
 import sys
 print('Encoder 1', sys.argv[1])

@@ -96,7 +96,7 @@ class KeyComboDialog(QDialog):
                 self.keysIndex = 0
             else:
                 self.keysIndex += 1
-                
+
 
 if __name__ == '__main__':
     class TestApp(QMainWindow):

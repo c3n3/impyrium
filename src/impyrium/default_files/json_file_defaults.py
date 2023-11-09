@@ -1,7 +1,7 @@
 from .default_file import DefaultFile
 from . import defaults
 
-inputsFile = DefaultFile(f"{defaults.JSON_FOLDER}/{defaults.INPUTS_FILE}", 
+inputsFile = DefaultFile(f"{defaults.JSON_FOLDER}/{defaults.INPUTS_FILE}",
 """\
 [
     {
@@ -22,13 +22,13 @@ inputsFile = DefaultFile(f"{defaults.JSON_FOLDER}/{defaults.INPUTS_FILE}",
 """
 )
 
-registry = DefaultFile(f"{defaults.JSON_FOLDER}/{defaults.REGISTRY_FILE}", 
+registry = DefaultFile(f"{defaults.JSON_FOLDER}/{defaults.REGISTRY_FILE}",
 """
 []
 """
 )
 
-folderCommands = DefaultFile(f"{defaults.JSON_FOLDER}/{defaults.FOLDER_COMMANDS_FILE}", 
+folderCommands = DefaultFile(f"{defaults.JSON_FOLDER}/{defaults.FOLDER_COMMANDS_FILE}",
 f"""
 [
     {{
