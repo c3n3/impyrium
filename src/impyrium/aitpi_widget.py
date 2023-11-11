@@ -3,8 +3,8 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import pyqtBoundSignal, QTimer, QThread, QEventLoop, pyqtSignal, QObject, pyqtSlot
 import os
 
-import aitpi
-from aitpi import router
+from .aitpi.src import aitpi
+from .aitpi.src.aitpi import router
 
 from .keycombo_dialog import KeyComboDialog
 from . import control

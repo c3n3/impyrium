@@ -5,7 +5,7 @@ runFile = DefaultFile(f"run.py",
 f"""\
 import time
 import impyrium
-import aitpi
+from .aitpi.src import aitpi
 from impyrium import control
 import os
 

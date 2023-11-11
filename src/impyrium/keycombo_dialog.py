@@ -2,7 +2,7 @@ import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QComboBox, QHBoxLayout
 
-from aitpi.pyqt6_key_map import pyqt6Map
+from .aitpi.src.aitpi.pyqt6_key_map import pyqt6Map
 
 from .inputless_combo import InputlessCombo
 

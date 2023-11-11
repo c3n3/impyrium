@@ -1,8 +1,8 @@
 import sys
 import time
 
-from aitpi import router
-import aitpi
+from .aitpi.src.aitpi import router
+from .aitpi.src import aitpi
 
 from .aitpi_widget import Aitpi
 from . import device_thread

@@ -4,8 +4,8 @@ from . import control
 from . import device_thread
 from . import main_menu
 
-from aitpi import router
-import aitpi
+from .aitpi.src.aitpi import router
+from .aitpi.src import aitpi
 
 _inputsFile = None
 _registryFile = None

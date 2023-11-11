@@ -1,5 +1,5 @@
-import aitpi
-from aitpi import router
+from .aitpi.src import aitpi
+from .aitpi.src.aitpi import router
 
 from . import device_thread
 
