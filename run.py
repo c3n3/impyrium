@@ -46,3 +46,4 @@ aitpi.router.addConsumer(['python_commands', 'python_encoders'], run_py)
 
 impyrium.start()
 
+aitpi.shutdown()
