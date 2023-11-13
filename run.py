@@ -6,7 +6,7 @@ from src.impyrium.aitpi.src.aitpi.input_initializer import TerminalKeyInput
 import os
 
 TerminalKeyInput.shouldSpawnThreads(True)
-TerminalKeyInput.setDebug(True)
+# TerminalKeyInput.setDebug(True)
 
 
 def doSomething(ctrl, event, devlist):

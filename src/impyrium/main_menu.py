@@ -7,6 +7,7 @@ from .aitpi.src import aitpi
 from .aitpi_widget import Aitpi
 from . import device_thread
 from . import control
+from .worker_thread import WorkerThread
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -40,40 +41,53 @@ def printAllOfType(item, t):
         if (type(item.__getattribute__(d)) == t):
             print(d)
 
-def generateButtonCallbackFun(ctrl):
-    def fun():
-        ctrl.sendFun(ctrl, aitpi.BUTTON_PRESS, control.getDevList(ctrl))
-    return fun
-
-def getObjectMod(ctrl):
-    if ctrl.controlType == control.CONTROL_BUTTON:
-        button = QPushButton()
-        button.setMinimumHeight(25)
-        button.setText(ctrl.name)
-        button.released.connect(generateButtonCallbackFun(ctrl))
-        return [button]
-    if ctrl.controlType == control.CONTROL_SLIDER:
-        ret = QSlider(Qt.Orientation.Horizontal)
-        ret.setMinimumHeight(25)
-        label = QLabel(ctrl.name)
-        label.setBuddy(ret)
-        return [label, ret]
-    return None
-
 class ControlsScrollView(QWidget):
     def __init__(self, category):
         super(ControlsScrollView, self).__init__()
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         controls = control.getControls()
+        self.worker = WorkerThread()
+        self.worker.start()
         if category in controls:
             for c in controls[category]:
-                mod = getObjectMod(c)
+                mod = self.getObjectMod(c)
                 if mod is None:
                     print(f"Mod is None for {c.name}, cannot do anything with this, please fix")
                     continue
                 for item in mod:
                     layout.addWidget(item)
+
+    def generateButtonCallbackFun(self, ctrl):
+        def fun():
+            ctrl.sendFun(ctrl, aitpi.BUTTON_PRESS, control.DeviceType.getControlDevList(ctrl))
+        return fun
+
+    def generateSliderCallbackFun(self, ctrl):
+        def fun(value):
+            item = lambda: ctrl.sendFun(ctrl, control.ControlEvents.VALUE_SET, control.DeviceType.getControlDevList(ctrl), arguments={"value": value})
+            if 'event' in ctrl.data and ctrl.data['event'] is not None:
+                self.worker.removeItem(ctrl.data['event'])
+            ctrl.data['event'] = self.worker.scheduleItem(0.5, item)
+        return fun
+
+    def getObjectMod(self, ctrl):
+        if ctrl.controlType == control.CONTROL_BUTTON:
+            button = QPushButton()
+            button.setMinimumHeight(25)
+            button.setText(ctrl.name)
+            button.released.connect(self.generateButtonCallbackFun(ctrl))
+            return [button]
+        if ctrl.controlType == control.CONTROL_SLIDER:
+            ret = QSlider(Qt.Orientation.Horizontal)
+            ret.setMinimum(0)
+            ret.setMaximum(100)
+            ret.setMinimumHeight(25)
+            label = QLabel(ctrl.name)
+            ret.valueChanged.connect(self.generateSliderCallbackFun(ctrl))
+            label.setBuddy(ret)
+            return [label, ret]
+        return None
 
 class ControlsTypeSection(QWidget):
     def __init__(self, category, parent: QWidget = None):
@@ -98,17 +112,25 @@ class ControlsTypeSection(QWidget):
 
 class ItemScrollView(QScrollArea):
     def __init__(self, items, parent: QWidget = None) -> None:
-        super(ItemScrollView, self).__init__()
+        super(ItemScrollView, self).__init__(parent)
         widget = QWidget()
-        layout = QVBoxLayout(widget)
-        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.mainLayout = QVBoxLayout(widget)
+        self.mainLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         for item in items:
-            layout.addWidget(item)
+            self.mainLayout.addWidget(item)
         self.setWidget(widget)
         self.setWidgetResizable(True)
 
+    def addItem(self, item):
+        self.mainLayout.addWidget(item)
+        self.update()
+
+    def removeItem(self, item):
+        self.mainLayout.removeWidget(item)
+        self.update()
+
 class DeviceList(QScrollArea):
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(self, parent: QWidget = None, selectDeviceFun = None) -> None:
         super(DeviceList, self).__init__(parent)
         self.widg = QWidget()
         self.box = QVBoxLayout(self.widg)
@@ -117,6 +139,25 @@ class DeviceList(QScrollArea):
         self.setWidgetResizable(True)
         self.objectNameChanged.connect(self.newDevices)
         self.widgetList = []
+        self.selectedDevice = None
+        self.selectedDeviceWidget = None
+        self.selectDeviceFun = selectDeviceFun
+
+    def selectDevice(self, device, widget):
+        if self.selectDeviceFun is not None:
+            print("Selecting device")
+            if self.selectedDevice != device:
+                self.selectDeviceFun(device)
+                widget.setStyleSheet("background-color: red")
+                widget.update()
+            else:
+                device = None
+                widget = None
+            if self.selectedDeviceWidget is not None:
+                self.selectedDeviceWidget.setStyleSheet("")
+                self.selectedDeviceWidget.update()
+            self.selectedDevice = device
+            self.selectedDeviceWidget = widget
 
     def addWidgetToLayout(self, widget):
         self.box.addWidget(widget)
@@ -129,14 +170,18 @@ class DeviceList(QScrollArea):
 
     def generateReservationHandleFun(self, device, t):
         def fun():
-            if t.reserveDeviceFun is not None:
-                t.reserveDeviceFun(device)
+            t.reserveDevice(device)
         return fun
 
     def generateReleaseHandleFun(self, device, t):
         def fun():
-            if t.releaseDeviceFun is not None:
-                t.releaseDeviceFun(device)
+            t.releaseDevice(device)
+        return fun
+
+    def generateSelectDeviceFun(self, device, widget):
+        def fun():
+            if self.selectDeviceFun is not None:
+                self.selectDevice(device, widget)
         return fun
 
     def newDevices(self, devTypes):
@@ -158,9 +203,21 @@ class DeviceList(QScrollArea):
             self.addWidgetToLayout(reservedLabel)
             for dev in devTypes[t].getReservedDevices():
                 button = QPushButton(self)
+                miniLayout = QHBoxLayout(self)
+                miniWidget = QWidget(self)
+                miniWidget.setLayout(miniLayout)
+
                 button.clicked.connect(self.generateReleaseHandleFun(dev, devTypes[t]))
                 button.setText(str(dev.uid))
-                self.addWidgetToLayout(button)
+                miniLayout.addWidget(button)
+
+                if self.selectDeviceFun is not None:
+                    deviceButton = QPushButton(self)
+                    deviceButton.clicked.connect(self.generateSelectDeviceFun(dev, miniWidget))
+                    deviceButton.setText("Select")
+                    miniLayout.addWidget(deviceButton)
+
+                self.addWidgetToLayout(miniWidget)
         self.widg.update()
 
 class Selectable(QWidget):
@@ -189,15 +246,19 @@ class MainWindow(QMainWindow):
             categories.add(c['id'])
 
         view2 = ItemScrollView([ControlsTypeSection(cat) for cat in categories])
+        self.currentControlList = ItemScrollView([], self)
         mainWidget = QWidget()
         mainLayout = QHBoxLayout()
         tabwidget = QTabWidget()
 
         tabwidget.addTab(Aitpi(self), "Shortcuts")
-        tabwidget.addTab(view2, "Controls")
-        devList = DeviceList(self)
+        tabwidget.addTab(view2, "Global Controls")
+        tabwidget.addTab(self.currentControlList, "Device Controls")
+        devList = DeviceList(self, self.selectDevice)
         mainLayout.addWidget(devList)
         mainLayout.addWidget(tabwidget)
+
+        self.selectedDevControls = []
 
         mainWidget.setLayout(mainLayout)
         device_thread.worker_
@@ -208,6 +269,19 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(mainWidget)
 
         self.isLinux = sys.platform.startswith('linux')
+
+    def selectDevice(self, dev):
+        for w in self.selectedDevControls:
+            self.currentControlList.removeItem(w)
+        self.selectedDevControls.clear()
+        if dev is not None:
+            categories = dev.deviceType.getControlCategories()
+            for cat in categories:
+                self.selectedDevControls.append(ControlsTypeSection(cat))
+            for w in self.selectedDevControls:
+                self.currentControlList.addItem(w)
+        self.currentControlList.update()
+        self.update()
 
     def keyPressEvent(self, event):
         if self.isLinux:

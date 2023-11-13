@@ -2,6 +2,7 @@ from .aitpi.src import aitpi
 from .aitpi.src.aitpi import router
 
 from . import device_thread
+from enum import Enum
 
 CONTROL_BUTTON   = 0
 CONTROL_SLIDER   = 1
@@ -14,39 +15,22 @@ CONTROL_ENUM     = 6
 BUTTON_CONTROLS = {CONTROL_BUTTON, CONTROL_FILE, CONTROL_DATE, CONTROL_STRING}
 ENCODER_CONTROLS = {CONTROL_DIAL, CONTROL_SLIDER, CONTROL_ENUM}
 
+class ControlEvents(Enum):
+    VALUE_SET = "VALUE_SET"
+
 controls_ = {}
 newDeviceFun_ = None
 signal_ = None
 
-def getControls():
-    global controls_
-    return controls_
-
-def init():
-    # We use a None registry to add controls
-    aitpi.addRegistry(None)
-
-def addToAitpi(control):
-    aitpi.addCommandToRegistry(None, control.name, control.category, control.inputType)
-    router.addConsumer([control.category], control)
-
-def getDevList(ctrl):
-    return []
-
-def registerControl(control):
-    global controls_
-    if (control.category not in controls_):
-        controls_[control.category] = []
-    controls_[control.category].append(control)
-    addToAitpi(control)
-
 class Control():
-    def __init__(self, category, name, controlType, sendFun):
+    def __init__(self, category, name, controlType, sendFun, deviceAutoReserve=False):
         self.name = name
         self.controlType = controlType
         self.sendFun = sendFun
         self.category = category
+        self.deviceAutoReserve = deviceAutoReserve
         self.hasReleased = False
+        self.data = {}
         if self.controlType in BUTTON_CONTROLS:
             self.inputType = "button"
         elif self.controlType in ENCODER_CONTROLS:
@@ -54,12 +38,18 @@ class Control():
 
     def consume(self, msg):
         if (msg.name == self.name):
-            self.sendFun(self, msg.event, [])
+
+            self.sendFun(self, msg.event, devices)
 
 # Simple helper class that defines a devices unique id, and stores reservation state
 class Device():
-    def __init__(self, uid):
+    def __init__(self, uid, deviceType):
         self.uid = uid
+        if type(deviceType) == str:
+            deviceType = DeviceType._deviceTypes[deviceType]
+        if type(deviceType) != DeviceType:
+            raise Exception("deviceType needs to be a DeviceType(), or the name string")
+        self.deviceType = deviceType
         self.reserveTask = None
         self.reserveTime = 0.0
 
@@ -67,11 +57,15 @@ class Device():
         return f"<{self.uid}>"
 
     def __eq__(self, other):
+        if type(other) != Device:
+            return False
         return self.uid == other.uid
 
     def __hash__(self):
         return self.uid.__hash__()
 
+    def isReserved(self):
+        return self.deviceType.isDevReserved(self)
 
 def registerNewDeviceFun(fun):
     global newDeviceFun_
@@ -83,16 +77,20 @@ def registerDeviceType(devType):
     DeviceType._deviceTypes[devType.name] = devType
     devType.scheduleDetection()
 
-
+def setDeviceFree(device):
+    for t in DeviceType._deviceTypes:
+        if device.uid in t.reservedDevices:
+            t.releaseDevice(device)
 
 # We allow the users to define devices types so that different types of devices can work
 class DeviceType():
     _deviceTypes = {}
 
-    def __init__(self, name, detector=None, pollRate=1, reserveDeviceFun=None, releaseDeviceFun=None, autoReservationTimeout=None, reserveCheck=None):
+    def __init__(self, name, controlCategories = [], detector=None, pollRate=1, reserveDeviceFun=None, releaseDeviceFun=None, autoReservationTimeout=None, reserveCheck=None):
         self.name = name
         self.detector = detector
         self.pollRate = pollRate
+        self.controlCategories = set(controlCategories)
         self.reserveCheck = reserveCheck
         self.reserveDeviceFun = reserveDeviceFun
         self.releaseDeviceFun = releaseDeviceFun
@@ -101,11 +99,32 @@ class DeviceType():
         self.reservedDevices = set()
         self.visableDevices = set()
 
+    def hasCategory(self, category):
+        return category in self.controlCategories
+
+    def getControlCategories(self):
+        return list(self.controlCategories)
+
+    def reserveAllDevices(self, autoReserve=False):
+        if self.reserveDeviceFun is None:
+            return
+        for dev in list(self.visableDevices):
+            self.reserveDevice(dev, autoReserve=autoReserve)
+
+    def isDevReserved(self, device):
+        return device in self.reservedDevices
+
     def getVisableDevices(self):
         return self.visableDevices
 
     def getReservedDevices(self):
         return self.reservedDevices
+
+    def sendUpdateSignal(self):
+        global newDeviceFun_
+        if newDeviceFun_ is not None:
+            # TODO: This is really jank
+            newDeviceFun_.objectNameChanged.emit("")
 
     def detect(self):
         global signal_
@@ -124,26 +143,76 @@ class DeviceType():
         self.visableDevices = self.visableDevices.union(visNew)
         self.reservedDevices = self.reservedDevices.union(resNew)
         if (hasNew != visNew.union(resNew)):
-            global newDeviceFun_
-            if newDeviceFun_ is not None:
-                newDeviceFun_.objectNameChanged.emit("")
-                pass
-                # signal_.emit("DeviceType._deviceTypes")
-                # newDeviceFun_("Something")
-
+            self.sendUpdateSignal()
         self.scheduleDetection()
 
     def scheduleDetection(self):
         if self.detector is not None:
             device_thread.scheduleItem(self.pollRate, self.detect)
 
+    def scheduleAutoTimeout(self, device):
+        if self.autoReservationTimeout is not None and self.releaseDeviceFun is not None:
+            device_thread.scheduleItem(self.autoReservationTimeout, lambda: self.releaseDevice(device))
+
     def releaseDevice(self, device):
         if (self.releaseDevice is not None):
-            self.releaseDevice(device)
+            if (self.reserveCheck is not None and not self.reserveCheck(device)):
+                # We know the device has already been released
+                return
+            self.releaseDeviceFun(device)
             self.reservedDevices.remove(device)
+            self.sendUpdateSignal()
 
-    def reserveDevice(self, device):
+    def reserveDevice(self, device, autoReserve=False):
         if (self.reserveDeviceFun is not None):
             self.reserveDeviceFun(device)
             self.reservedDevices.add(device)
             self.visableDevices.remove(device)
+            self.sendUpdateSignal()
+            if autoReserve:
+                self.scheduleAutoTimeout(device)
+
+    @staticmethod
+    def getAllDeviceTypes(category):
+        ret = []
+        for key in DeviceType._deviceTypes.keys():
+            t = DeviceType._deviceTypes[key]
+            if t.hasCategory(category):
+                ret.append(t)
+        return ret
+
+    @staticmethod
+    def getControlDevList(ctrl):
+        devices = set()
+        for t in DeviceType.getAllDeviceTypes(ctrl.category):
+            if ctrl.deviceAutoReserve:
+                t.reserveAllDevices(autoReserve=True)
+            devices.update(t.getReservedDevices())
+        return devices
+
+def getControls():
+    global controls_
+    return controls_
+
+def init():
+    # We use a None registry to add controls
+    aitpi.addRegistry(None)
+
+def addToAitpi(control):
+    aitpi.addCommandToRegistry(None, control.name, control.category, control.inputType)
+    router.addConsumer([control.category], control)
+
+def registerControl(control):
+    global controls_
+    if (control.category not in controls_):
+        controls_[control.category] = []
+    controls_[control.category].append(control)
+    addToAitpi(control)
+
+def getControlsForDevice(device : Device):
+    global controls_
+    ret = {}
+    for cat in device.deviceType.getControlCategories():
+        ret[cat] = list(controls_[cat])
+
+    return ret
