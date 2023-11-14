@@ -9,16 +9,20 @@ TerminalKeyInput.shouldSpawnThreads(True)
 # TerminalKeyInput.setDebug(True)
 
 
-def doSomething(ctrl, event, devlist):
-    print("Sent", ctrl.name, "with", event)
+def doSomething(ctrl, event, devlist, arguments=None):
+    print("Sent", ctrl.name, "with", event, devlist, arguments)
 
 start = time.time()
 def detectUsbs():
-    seconds = time.time() - start
-    seconds = min(10, int(seconds / 5))
     ret = []
-    for i in range(seconds):
-        ret.append(control.Device(i))
+    for i in range(2):
+        ret.append(control.Device(i, "Usb device"))
+    return ret
+
+def otherDevices():
+    ret = []
+    for i in range(2):
+        ret.append(control.Device(f"{i} Other", "Other device"))
     return ret
 
     
@@ -26,17 +30,31 @@ impyrium.init("./test_json/inputs.json", "./test_json/registry.json", "./test_js
 
 # Add all controls and devices
 
-control.registerControl(control.Control("Category1", "Control1", control.CONTROL_BUTTON, doSomething))
-control.registerControl(control.Control("Category1", "Control2", control.CONTROL_BUTTON, doSomething))
-control.registerControl(control.Control("Category1", "Control3", control.CONTROL_BUTTON, doSomething))
-control.registerControl(control.Control("Category2", "Control4", control.CONTROL_BUTTON, doSomething))
-control.registerControl(control.Control("Category2", "Control5", control.CONTROL_SLIDER, doSomething))
-control.registerControl(control.Control("Category2", "Control6", control.CONTROL_SLIDER, doSomething))
-control.registerControl(control.Control("Category3", "Control7", control.CONTROL_SLIDER, doSomething))
-control.registerControl(control.Control("Category3", "Control8", control.CONTROL_SLIDER, doSomething))
-control.registerDeviceType(control.DeviceType("Usb device", detectUsbs, releaseDeviceFun=lambda x: print("Release", x)))
+control.registerControl(control.Control("Category1", "Control1", control.ControlButton(), doSomething))
+control.registerControl(control.Control("Category1", "Control2", control.ControlButton(), doSomething))
+control.registerControl(control.Control("Category1", "Control3", control.ControlButton(), doSomething))
+control.registerControl(control.Control("Category2", "Control4", control.ControlButton(), doSomething))
+control.registerControl(control.Control("Category2", "Control5", control.ControlSlider(0, 100, 0.5), doSomething))
+control.registerControl(control.Control("Category2", "Control6", control.ControlSlider(0, 100, 0.5), doSomething))
+control.registerControl(control.Control("Category3", "Control7", control.ControlSlider(-100, 100, 0.5), doSomething))
+control.registerControl(control.Control("Category3", "Control8", control.ControlSlider(0, 100, 0.5), doSomething))
 
-def run_py(message):
+usbDevices = control.DeviceType(
+    "Usb device",
+    detector=detectUsbs,
+    controlCategories=["Category1"]
+)
+
+otherDevs = control.DeviceType(
+    "Other device",
+    detector=otherDevices,
+    controlCategories=["Category3"]
+)
+
+control.registerDeviceType(usbDevices)
+control.registerDeviceType(otherDevs)
+
+def run_py(message, event, devList):
     if (message.event == aitpi.BUTTON_PRESS and message.attributes['id'] == 'python_commands'):
         os.system(f"python3 {message.attributes['path']}/{message.attributes['name']}")
     elif (message.event in aitpi.ENCODER_VALUES and message.attributes['id'] == 'python_encoders'):

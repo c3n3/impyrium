@@ -12,11 +12,36 @@ CONTROL_STRING   = 4
 CONTROL_DATE     = 5
 CONTROL_ENUM     = 6
 
-BUTTON_CONTROLS = {CONTROL_BUTTON, CONTROL_FILE, CONTROL_DATE, CONTROL_STRING}
-ENCODER_CONTROLS = {CONTROL_DIAL, CONTROL_SLIDER, CONTROL_ENUM}
-
 class ControlEvents(Enum):
     VALUE_SET = "VALUE_SET"
+
+class ControlButton():
+    def __init__(self) -> None:
+        pass
+
+class ControlSlider():
+    def __init__(self, minimum, maximum, increment) -> None:
+        self.min = minimum
+        self.max = maximum
+        self.increment = increment
+        res = (self.max - self.min) / self.increment
+        # Make sure our max always lines up 
+        self.max = self.min + int(res) * self.increment
+
+    def convertSliderValue(self, value):
+        value = (self.increment * value) + self.min
+        return value
+
+    def generateSliderValues(self):
+        distance = abs(self.max - self.min)
+        counts = abs(distance / self.increment)
+        #       min    max       increment
+        print(counts)
+        return (0,     int(counts),   1)
+
+BUTTON_CONTROLS = {ControlButton, CONTROL_FILE, CONTROL_DATE, CONTROL_STRING}
+ENCODER_CONTROLS = {CONTROL_DIAL, ControlSlider, CONTROL_ENUM}
+
 
 controls_ = {}
 newDeviceFun_ = None
@@ -31,15 +56,16 @@ class Control():
         self.deviceAutoReserve = deviceAutoReserve
         self.hasReleased = False
         self.data = {}
-        if self.controlType in BUTTON_CONTROLS:
+        if type(self.controlType) in BUTTON_CONTROLS:
             self.inputType = "button"
-        elif self.controlType in ENCODER_CONTROLS:
+        elif type(self.controlType) in ENCODER_CONTROLS:
             self.inputType = "encoder"
+        else:
+            raise Exception("Invalid control type")
 
     def consume(self, msg):
         if (msg.name == self.name):
-
-            self.sendFun(self, msg.event, devices)
+            self.sendFun(msg, msg.event, DeviceType.getReservedDevices())
 
 # Simple helper class that defines a devices unique id, and stores reservation state
 class Device():
@@ -155,7 +181,7 @@ class DeviceType():
             device_thread.scheduleItem(self.autoReservationTimeout, lambda: self.releaseDevice(device))
 
     def releaseDevice(self, device):
-        if (self.releaseDevice is not None):
+        if (self.releaseDeviceFun is not None):
             if (self.reserveCheck is not None and not self.reserveCheck(device)):
                 # We know the device has already been released
                 return

@@ -65,23 +65,27 @@ class ControlsScrollView(QWidget):
 
     def generateSliderCallbackFun(self, ctrl):
         def fun(value):
-            item = lambda: ctrl.sendFun(ctrl, control.ControlEvents.VALUE_SET, control.DeviceType.getControlDevList(ctrl), arguments={"value": value})
+            item = lambda: ctrl.sendFun(ctrl,
+                                        control.ControlEvents.VALUE_SET,
+                                        control.DeviceType.getControlDevList(ctrl),
+                                        arguments={"value": ctrl.controlType.convertSliderValue(value)})
             if 'event' in ctrl.data and ctrl.data['event'] is not None:
                 self.worker.removeItem(ctrl.data['event'])
             ctrl.data['event'] = self.worker.scheduleItem(0.5, item)
         return fun
 
     def getObjectMod(self, ctrl):
-        if ctrl.controlType == control.CONTROL_BUTTON:
+        if type(ctrl.controlType) == control.ControlButton:
             button = QPushButton()
             button.setMinimumHeight(25)
             button.setText(ctrl.name)
             button.released.connect(self.generateButtonCallbackFun(ctrl))
             return [button]
-        if ctrl.controlType == control.CONTROL_SLIDER:
+        if type(ctrl.controlType) == control.ControlSlider:
             ret = QSlider(Qt.Orientation.Horizontal)
-            ret.setMinimum(0)
-            ret.setMaximum(100)
+            res = ctrl.controlType.generateSliderValues()
+            ret.setMinimum(res[0])
+            ret.setMaximum(res[1])
             ret.setMinimumHeight(25)
             label = QLabel(ctrl.name)
             ret.valueChanged.connect(self.generateSliderCallbackFun(ctrl))
@@ -123,11 +127,9 @@ class ItemScrollView(QScrollArea):
 
     def addItem(self, item):
         self.mainLayout.addWidget(item)
-        self.update()
 
     def removeItem(self, item):
         self.mainLayout.removeWidget(item)
-        self.update()
 
 class DeviceList(QScrollArea):
     def __init__(self, parent: QWidget = None, selectDeviceFun = None) -> None:
@@ -146,8 +148,7 @@ class DeviceList(QScrollArea):
     def selectDevice(self, device, widget):
         if self.selectDeviceFun is not None:
             print("Selecting device")
-            if self.selectedDevice != device:
-                self.selectDeviceFun(device)
+            if self.selectedDevice != device and device is not None:
                 widget.setStyleSheet("background-color: red")
                 widget.update()
             else:
@@ -156,6 +157,7 @@ class DeviceList(QScrollArea):
             if self.selectedDeviceWidget is not None:
                 self.selectedDeviceWidget.setStyleSheet("")
                 self.selectedDeviceWidget.update()
+            self.selectDeviceFun(device)
             self.selectedDevice = device
             self.selectedDeviceWidget = widget
 
@@ -237,7 +239,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Impyrium")
-        self.setMinimumSize(10, 500)
+        self.setMinimumSize(800, 500)
 
         # None registry is the control box
         commands = aitpi.getCommandsByRegistry(None)
@@ -281,7 +283,6 @@ class MainWindow(QMainWindow):
             for w in self.selectedDevControls:
                 self.currentControlList.addItem(w)
         self.currentControlList.update()
-        self.update()
 
     def keyPressEvent(self, event):
         if self.isLinux:
