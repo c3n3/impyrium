@@ -4,68 +4,126 @@ from .aitpi.src.aitpi import router
 from . import device_thread
 from enum import Enum
 
-CONTROL_BUTTON   = 0
-CONTROL_SLIDER   = 1
-CONTROL_DIAL     = 2
-CONTROL_FILE     = 3
-CONTROL_STRING   = 4
-CONTROL_DATE     = 5
-CONTROL_ENUM     = 6
-
 class ControlEvents(Enum):
-    VALUE_SET = "VALUE_SET"
+    VALUE_SET       = "VALUE_SET"
+    BUTTON_PRESS    = "BUTTON_PRESS"
+    BUTTON_RELEASE  = "BUTTON_RELEASE"
 
-class ControlButton():
-    def __init__(self) -> None:
-        pass
-
-class ControlSlider():
-    def __init__(self, minimum, maximum, increment) -> None:
+class RangeValue():
+    def __init__(self, minimum, maximum, increment, default=None):
+        if default is None:
+            default = minimum
         self.min = minimum
         self.max = maximum
-        self.increment = increment
-        res = (self.max - self.min) / self.increment
-        # Make sure our max always lines up 
-        self.max = self.min + int(res) * self.increment
+        self.inc = increment
+        res = (self.max - self.min) / self.inc
 
-    def convertSliderValue(self, value):
-        value = (self.increment * value) + self.min
+        self.max = self.generateValidValue(self.max)
+        self.value = self.generateValidValue(default)
+
+
+    def generateValidValue(self, value):
+        if value < self.min:
+            value = self.min
+        if value > self.max:
+            value = self.max
+
+        res = (value - self.min) / self.inc
+        if (float(int(res)) != res):
+            value = self.min + int(res) * self.inc 
         return value
 
-    def generateSliderValues(self):
-        distance = abs(self.max - self.min)
-        counts = abs(distance / self.increment)
-        #       min    max       increment
-        print(counts)
-        return (0,     int(counts),   1)
+    def sub(self):
+        self.value = self.generateValidValue(self.value - self.inc)
 
-BUTTON_CONTROLS = {ControlButton, CONTROL_FILE, CONTROL_DATE, CONTROL_STRING}
-ENCODER_CONTROLS = {CONTROL_DIAL, ControlSlider, CONTROL_ENUM}
+    def add(self):
+        self.value = self.generateValidValue(self.value + self.inc)
 
+    def left(self):
+        return self.sub()
+
+    def right(self):
+        return self.add()
+
+    def setValue(self, value):
+        self.value = self.generateValidValue(value)
+
+    def getValue(self):
+        return self.value
 
 controls_ = {}
 newDeviceFun_ = None
 signal_ = None
 
 class Control():
-    def __init__(self, category, name, controlType, sendFun, deviceAutoReserve=False):
+    def __init__(self, category, name, sendFun, deviceAutoReserve=False):
         self.name = name
-        self.controlType = controlType
         self.sendFun = sendFun
         self.category = category
         self.deviceAutoReserve = deviceAutoReserve
         self.hasReleased = False
         self.data = {}
-        if type(self.controlType) in BUTTON_CONTROLS:
-            self.inputType = "button"
-        elif type(self.controlType) in ENCODER_CONTROLS:
-            self.inputType = "encoder"
-        else:
-            raise Exception("Invalid control type")
+        self.inputType = "button"
 
     def consume(self, msg):
         if (msg.name == self.name):
-            self.sendFun(msg, msg.event, DeviceType.getReservedDevices())
+            e = ControlEvents.BUTTON_PRESS
+            if msg.event == aitpi.BUTTON_RELEASE:
+                e = ControlEvents.BUTTON_RELEASE
+            self.sendFun(self, e, DeviceType.getControlDevList(self))
+
+class ControlButton(Control):
+    pass #Base Control() is a button
+
+class ControlDial(Control):
+    pass #TODO:
+
+class ControlFile(Control):
+    pass #TODO:
+
+class ControlString(Control):
+    pass #TODO:
+
+class ControlDate(Control):
+    pass #TODO:
+
+class ControlEnum(Control):
+    pass #TODO:
+
+class ControlSlider(Control):
+    def __init__(self, category, name, sendFun, sliderRange : RangeValue, deviceAutoReserve=False) -> None:
+        super().__init__(category, name, sendFun, deviceAutoReserve)
+        self.range = sliderRange
+        self.inputType = "encoder"
+
+    def convertSliderValue(self, value):
+        value = (self.range.inc * value) + self.range.min
+        return value
+
+    def generateSliderValues(self):
+        distance = abs(self.range.max - self.range.min)
+        counts = abs(distance / self.range.inc)
+        #       min    max       increment
+        return (0,     int(counts),   1)
+
+    def setValue(self, value):
+        self.range.setValue(value)
+
+    def getValue(self):
+        return self.range.getValue()
+
+    def consume(self, msg):
+        if (msg.name == self.name):
+            e = ControlEvents.VALUE_SET
+            if msg.event == aitpi.ENCODER_LEFT:
+                self.range.left()
+            elif msg.event == aitpi.ENCODER_RIGHT:
+                self.range.right()
+            else:
+                print("Error----")
+                raise Exception(f"Invalid aitpit command {msg.event}")
+
+            self.sendFun(self, e, DeviceType.getControlDevList(self))
 
 # Simple helper class that defines a devices unique id, and stores reservation state
 class Device():
@@ -103,10 +161,11 @@ def registerDeviceType(devType):
     DeviceType._deviceTypes[devType.name] = devType
     devType.scheduleDetection()
 
-def setDeviceFree(device):
-    for t in DeviceType._deviceTypes:
+def removeReserved(device):
+    for key in DeviceType._deviceTypes:
+        t = DeviceType._deviceTypes[key]
         if device.uid in t.reservedDevices:
-            t.releaseDevice(device)
+            t.removeReserved(device)
 
 # We allow the users to define devices types so that different types of devices can work
 class DeviceType():
@@ -127,6 +186,9 @@ class DeviceType():
 
     def hasCategory(self, category):
         return category in self.controlCategories
+
+    def canReserve(self):
+        return self.reserveDeviceFun is not None
 
     def getControlCategories(self):
         return list(self.controlCategories)
@@ -160,15 +222,15 @@ class DeviceType():
         for device in devices:
             if type(device) != Device:
                 raise Exception("All detected devices need to be Device()")
-            if device not in self.visableDevices:
-                if self.reserveDeviceFun is not None:
-                    visNew.add(device)
-                else:
-                    resNew.add(device)
-        hasNew = self.visableDevices.intersection(visNew).union(self.reservedDevices.intersection(resNew))
-        self.visableDevices = self.visableDevices.union(visNew)
-        self.reservedDevices = self.reservedDevices.union(resNew)
-        if (hasNew != visNew.union(resNew)):
+            if self.canReserve():
+                visNew.add(device)
+            else:
+                resNew.add(device)
+        if (self.visableDevices != visNew or (not self.canReserve() and self.reservedDevices != resNew)):
+            print("Device change detected", visNew, resNew)
+            self.visableDevices = visNew
+            if not self.canReserve():
+                self.reservedDevices = resNew
             self.sendUpdateSignal()
         self.scheduleDetection()
 
@@ -179,6 +241,10 @@ class DeviceType():
     def scheduleAutoTimeout(self, device):
         if self.autoReservationTimeout is not None and self.releaseDeviceFun is not None:
             device_thread.scheduleItem(self.autoReservationTimeout, lambda: self.releaseDevice(device))
+
+    def removeReserved(self, device):
+        self.reservedDevices.remove(device)
+        self.sendUpdateSignal()
 
     def releaseDevice(self, device):
         if (self.releaseDeviceFun is not None):

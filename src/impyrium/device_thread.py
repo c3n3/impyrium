@@ -15,7 +15,7 @@ class DeviceThread(QThread):
             try:
                 self.scheduler.run()
             except Exception as e:
-                print(e)
+                print("DEVICE THREAD ERROR:", e)
             time.sleep(0.5)
 
 def scheduleItem(delay, fun, arguments=(), priority=0):

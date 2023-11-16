@@ -57,6 +57,8 @@ class ControlsScrollView(QWidget):
                     continue
                 for item in mod:
                     layout.addWidget(item)
+        else:
+            print("Could not find any controls for ", category)
 
     def generateButtonCallbackFun(self, ctrl):
         def fun():
@@ -67,23 +69,22 @@ class ControlsScrollView(QWidget):
         def fun(value):
             item = lambda: ctrl.sendFun(ctrl,
                                         control.ControlEvents.VALUE_SET,
-                                        control.DeviceType.getControlDevList(ctrl),
-                                        arguments={"value": ctrl.controlType.convertSliderValue(value)})
+                                        control.DeviceType.getControlDevList(ctrl))
             if 'event' in ctrl.data and ctrl.data['event'] is not None:
                 self.worker.removeItem(ctrl.data['event'])
             ctrl.data['event'] = self.worker.scheduleItem(0.5, item)
         return fun
 
     def getObjectMod(self, ctrl):
-        if type(ctrl.controlType) == control.ControlButton:
+        if type(ctrl) == control.ControlButton:
             button = QPushButton()
             button.setMinimumHeight(25)
             button.setText(ctrl.name)
             button.released.connect(self.generateButtonCallbackFun(ctrl))
             return [button]
-        if type(ctrl.controlType) == control.ControlSlider:
+        if type(ctrl) == control.ControlSlider:
             ret = QSlider(Qt.Orientation.Horizontal)
-            res = ctrl.controlType.generateSliderValues()
+            res = ctrl.generateSliderValues()
             ret.setMinimum(res[0])
             ret.setMaximum(res[1])
             ret.setMinimumHeight(25)
@@ -166,17 +167,29 @@ class DeviceList(QScrollArea):
         self.widgetList.append(widget)
 
     def clearWidgets(self):
+        print("Cleared")
         for w in self.widgetList:
+            w.setStyleSheet("")
+            for child in w.children():
+                w.setStyleSheet("")
+                child.deleteLater()
             self.box.removeWidget(w)
         self.widgetList.clear()
+
+    def removeWidget(self, w):
+        self.box.removeWidget(w)
+        print(self.widgetList, w)
+        self.widgetList.remove(w)
 
     def generateReservationHandleFun(self, device, t):
         def fun():
             t.reserveDevice(device)
         return fun
 
-    def generateReleaseHandleFun(self, device, t):
+    def generateReleaseHandleFun(self, device, t, w):
         def fun():
+            if device == self.selectedDevice:
+                self.selectDevice(None, None)
             t.releaseDevice(device)
         return fun
 
@@ -193,7 +206,7 @@ class DeviceList(QScrollArea):
         for t in devTypes.keys():
             if len(devTypes[t].getVisableDevices()) > 0:
                 detectedLabel = QLabel(self)
-                detectedLabel.setText("Detected:")
+                detectedLabel.setText(f"{t} detected:")
                 self.addWidgetToLayout(detectedLabel)
             for dev in devTypes[t].getVisableDevices():
                 button = QPushButton(self)
@@ -201,26 +214,29 @@ class DeviceList(QScrollArea):
                 button.setText(str(dev.uid))
                 self.addWidgetToLayout(button)
             reservedLabel = QLabel(self)
-            reservedLabel.setText("Reserved:")
-            self.addWidgetToLayout(reservedLabel)
-            for dev in devTypes[t].getReservedDevices():
-                button = QPushButton(self)
-                miniLayout = QHBoxLayout(self)
+            reserved = devTypes[t].getReservedDevices()
+            if len(reserved) > 0:
+                reservedLabel.setText(f"{t} reserved:")
+                self.addWidgetToLayout(reservedLabel)
+            print("Reserved", reserved)
+            for dev in reserved:
                 miniWidget = QWidget(self)
+                button = QPushButton(miniWidget)
+                miniLayout = QHBoxLayout(miniWidget)
                 miniWidget.setLayout(miniLayout)
 
-                button.clicked.connect(self.generateReleaseHandleFun(dev, devTypes[t]))
+                button.clicked.connect(self.generateReleaseHandleFun(dev, devTypes[t], miniWidget))
                 button.setText(str(dev.uid))
                 miniLayout.addWidget(button)
 
                 if self.selectDeviceFun is not None:
-                    deviceButton = QPushButton(self)
+                    deviceButton = QPushButton(miniWidget)
                     deviceButton.clicked.connect(self.generateSelectDeviceFun(dev, miniWidget))
                     deviceButton.setText("Select")
                     miniLayout.addWidget(deviceButton)
 
                 self.addWidgetToLayout(miniWidget)
-        self.widg.update()
+        self.update()
 
 class Selectable(QWidget):
     def __init__(self, title, items, onSelectFun, parent: QWidget = None) -> None:
