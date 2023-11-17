@@ -23,6 +23,9 @@ class DeviceThread(QThread):
 def scheduleItem(delay, fun, arguments=(), priority=0):
     return worker_.scheduler.enter(delay, priority, fun, arguments)
 
+def cancel(event):
+    return worker_.scheduler.cancel(event)
+
 def start():
     global worker_
     if worker_ == None:

@@ -63,17 +63,18 @@ class ControlsScrollView(QWidget):
 
     def generateButtonCallbackFun(self, ctrl):
         def fun():
-            ctrl.sendFun(ctrl, aitpi.BUTTON_PRESS, control.DeviceType.getControlDevList(ctrl, self.autoReserve))
+            if ctrl.enabled:
+                ctrl.handleGuiEvent(control.ControlEvents.BUTTON_PRESS, control.DeviceType.getControlDevList(ctrl, self.autoReserve))
         return fun
 
     def generateSliderCallbackFun(self, ctrl):
         def fun(value):
-            item = lambda: ctrl.sendFun(ctrl,
-                                        control.ControlEvents.VALUE_SET,
-                                        control.DeviceType.getControlDevList(ctrl, self.autoReserve))
-            if 'event' in ctrl.data and ctrl.data['event'] is not None:
-                self.worker.removeItem(ctrl.data['event'])
-            ctrl.data['event'] = self.worker.scheduleItem(0.5, item)
+            if ctrl.enabled:
+                item = lambda: ctrl.handleGuiEvent(control.ControlEvents.VALUE_SET,
+                                            control.DeviceType.getControlDevList(ctrl, self.autoReserve))
+                if 'event' in ctrl.data and ctrl.data['event'] is not None:
+                    self.worker.removeItem(ctrl.data['event'])
+                ctrl.data['event'] = self.worker.scheduleItem(0.5, item)
         return fun
 
     def getObjectMod(self, ctrl):

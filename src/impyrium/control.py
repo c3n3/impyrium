@@ -56,7 +56,7 @@ newDeviceFun_ = None
 signal_ = None
 
 class Control():
-    def __init__(self, category, name, sendFun, deviceAutoReserve=False):
+    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True):
         self.name = name
         self.sendFun = sendFun
         self.category = category
@@ -64,8 +64,24 @@ class Control():
         self.hasReleased = False
         self.data = {}
         self.inputType = "button"
+        self.enabled = enabled
+
+    def disable(self):
+        self.enabled = False
+
+    def enable(self):
+        self.enabled = True
 
     def consume(self, msg):
+        if not self.enabled:
+            return
+        self.handleAitpi(msg)
+
+    def handleGuiEvent(self, event, devList):
+        if self.enabled:
+            self.sendFun(self, event, devList)
+
+    def handleAitpi(self, msg):
         if (msg.name == self.name):
             e = ControlEvents.BUTTON_PRESS
             if msg.event == aitpi.BUTTON_RELEASE:
@@ -112,7 +128,7 @@ class ControlSlider(Control):
     def getValue(self):
         return self.range.getValue()
 
-    def consume(self, msg):
+    def handleAitpi(self, msg):
         if (msg.name == self.name):
             e = ControlEvents.VALUE_SET
             if msg.event == aitpi.ENCODER_LEFT:
@@ -237,14 +253,18 @@ class DeviceType():
             device_thread.scheduleItem(self.pollRate, self.detect)
 
     def scheduleAutoTimeout(self, device):
+        if device.reserveTask is not None:
+            device_thread.cancel(device.reserveTask)
+            device.reserveTask = None
         if self.autoReservationTimeout is not None and self.releaseDeviceFun is not None:
-            device_thread.scheduleItem(self.autoReservationTimeout, lambda: self.releaseDevice(device))
+            device.reserveTask = device_thread.scheduleItem(self.autoReservationTimeout, lambda: self.releaseDevice(device))
 
     def checkReservations(self):
         self.reservedDevices.difference_update(self.reservedDevices - self.devices)
 
     def releaseDevice(self, device):
         if (self.releaseDeviceFun is not None):
+            device.reserveTask = None
             if (self.reserveCheck is not None and not self.reserveCheck(device)):
                 # We know the device has already been released
                 return
