@@ -1,6 +1,7 @@
 from PyQt6.QtCore import QThread
 import sched
 import time
+import traceback
 
 worker_ = None
 
@@ -15,6 +16,7 @@ class DeviceThread(QThread):
             try:
                 self.scheduler.run()
             except Exception as e:
+                print(traceback.format_exc())
                 print("DEVICE THREAD ERROR:", e)
             time.sleep(0.5)
 

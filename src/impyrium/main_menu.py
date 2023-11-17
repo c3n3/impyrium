@@ -42,9 +42,10 @@ def printAllOfType(item, t):
             print(d)
 
 class ControlsScrollView(QWidget):
-    def __init__(self, category):
+    def __init__(self, category, autoReserve):
         super(ControlsScrollView, self).__init__()
         layout = QVBoxLayout(self)
+        self.autoReserve = autoReserve
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         controls = control.getControls()
         self.worker = WorkerThread()
@@ -62,14 +63,14 @@ class ControlsScrollView(QWidget):
 
     def generateButtonCallbackFun(self, ctrl):
         def fun():
-            ctrl.sendFun(ctrl, aitpi.BUTTON_PRESS, control.DeviceType.getControlDevList(ctrl))
+            ctrl.sendFun(ctrl, aitpi.BUTTON_PRESS, control.DeviceType.getControlDevList(ctrl, self.autoReserve))
         return fun
 
     def generateSliderCallbackFun(self, ctrl):
         def fun(value):
             item = lambda: ctrl.sendFun(ctrl,
                                         control.ControlEvents.VALUE_SET,
-                                        control.DeviceType.getControlDevList(ctrl))
+                                        control.DeviceType.getControlDevList(ctrl, self.autoReserve))
             if 'event' in ctrl.data and ctrl.data['event'] is not None:
                 self.worker.removeItem(ctrl.data['event'])
             ctrl.data['event'] = self.worker.scheduleItem(0.5, item)
@@ -95,17 +96,17 @@ class ControlsScrollView(QWidget):
         return None
 
 class ControlsTypeSection(QWidget):
-    def __init__(self, category, parent: QWidget = None):
+    def __init__(self, category, autoReserve, parent: QWidget = None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         button = QPushButton(self)
         button.setText(category + " ↓")
-        self.showing = False
+        self.showing = True
         button.clicked.connect(self.buttonPressed)
         layout.addWidget(button)
-        self.controlsView = ControlsScrollView(category)
-        self.controlsView.hide()
+        self.controlsView = ControlsScrollView(category, autoReserve)
+        self.controlsView.show()
         layout.addWidget(self.controlsView)
 
     def buttonPressed(self):
@@ -204,11 +205,12 @@ class DeviceList(QScrollArea):
         devTypes = control.DeviceType._deviceTypes
         self.clearWidgets()
         for t in devTypes.keys():
-            if len(devTypes[t].getVisableDevices()) > 0:
+            unreserved = devTypes[t].getUnreservedDevices()
+            if len(unreserved) > 0:
                 detectedLabel = QLabel(self)
                 detectedLabel.setText(f"{t} detected:")
                 self.addWidgetToLayout(detectedLabel)
-            for dev in devTypes[t].getVisableDevices():
+            for dev in unreserved:
                 button = QPushButton(self)
                 button.clicked.connect(self.generateReservationHandleFun(dev, devTypes[t]))
                 button.setText(str(dev.uid))
@@ -234,7 +236,6 @@ class DeviceList(QScrollArea):
                     deviceButton.clicked.connect(self.generateSelectDeviceFun(dev, miniWidget))
                     deviceButton.setText("Select")
                     miniLayout.addWidget(deviceButton)
-
                 self.addWidgetToLayout(miniWidget)
         self.update()
 
@@ -263,7 +264,7 @@ class MainWindow(QMainWindow):
         for c in commands:
             categories.add(c['id'])
 
-        view2 = ItemScrollView([ControlsTypeSection(cat) for cat in categories])
+        view2 = ItemScrollView([ControlsTypeSection(cat, True) for cat in categories])
         self.currentControlList = ItemScrollView([], self)
         mainWidget = QWidget()
         mainLayout = QHBoxLayout()
@@ -295,7 +296,7 @@ class MainWindow(QMainWindow):
         if dev is not None:
             categories = dev.deviceType.getControlCategories()
             for cat in categories:
-                self.selectedDevControls.append(ControlsTypeSection(cat))
+                self.selectedDevControls.append(ControlsTypeSection(cat, False))
             for w in self.selectedDevControls:
                 self.currentControlList.addItem(w)
         self.currentControlList.update()

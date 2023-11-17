@@ -182,7 +182,7 @@ class DeviceType():
         self.autoReservationTimeout = autoReservationTimeout
         self.ownsDevice = False
         self.reservedDevices = set()
-        self.visableDevices = set()
+        self.devices = set()
 
     def hasCategory(self, category):
         return category in self.controlCategories
@@ -194,19 +194,23 @@ class DeviceType():
         return list(self.controlCategories)
 
     def reserveAllDevices(self, autoReserve=False):
-        if self.reserveDeviceFun is None:
+        if not self.canReserve():
             return
-        for dev in list(self.visableDevices):
+        for dev in list(self.devices):
             self.reserveDevice(dev, autoReserve=autoReserve)
 
     def isDevReserved(self, device):
         return device in self.reservedDevices
 
-    def getVisableDevices(self):
-        return self.visableDevices
+    def getUnreservedDevices(self):
+        if self.canReserve():
+            return self.devices.difference(self.reservedDevices)
+        return set()
 
     def getReservedDevices(self):
-        return self.reservedDevices
+        if self.canReserve():
+            return self.reservedDevices
+        return self.devices
 
     def sendUpdateSignal(self):
         global newDeviceFun_
@@ -217,20 +221,14 @@ class DeviceType():
     def detect(self):
         global signal_
         devices = self.detector()
-        visNew = set()
-        resNew = set()
+        newDevices = set()
         for device in devices:
             if type(device) != Device:
                 raise Exception("All detected devices need to be Device()")
-            if self.canReserve():
-                visNew.add(device)
-            else:
-                resNew.add(device)
-        if (self.visableDevices != visNew or (not self.canReserve() and self.reservedDevices != resNew)):
-            print("Device change detected", visNew, resNew)
-            self.visableDevices = visNew
-            if not self.canReserve():
-                self.reservedDevices = resNew
+            newDevices.add(device)
+        if (self.devices != newDevices):
+            self.devices = newDevices
+            self.checkReservations()
             self.sendUpdateSignal()
         self.scheduleDetection()
 
@@ -242,9 +240,8 @@ class DeviceType():
         if self.autoReservationTimeout is not None and self.releaseDeviceFun is not None:
             device_thread.scheduleItem(self.autoReservationTimeout, lambda: self.releaseDevice(device))
 
-    def removeReserved(self, device):
-        self.reservedDevices.remove(device)
-        self.sendUpdateSignal()
+    def checkReservations(self):
+        self.reservedDevices.difference_update(self.reservedDevices - self.devices)
 
     def releaseDevice(self, device):
         if (self.releaseDeviceFun is not None):
@@ -259,7 +256,6 @@ class DeviceType():
         if (self.reserveDeviceFun is not None):
             self.reserveDeviceFun(device)
             self.reservedDevices.add(device)
-            self.visableDevices.remove(device)
             self.sendUpdateSignal()
             if autoReserve:
                 self.scheduleAutoTimeout(device)
@@ -274,10 +270,10 @@ class DeviceType():
         return ret
 
     @staticmethod
-    def getControlDevList(ctrl):
+    def getControlDevList(ctrl, shouldAutoReserve=True):
         devices = set()
         for t in DeviceType.getAllDeviceTypes(ctrl.category):
-            if ctrl.deviceAutoReserve:
+            if ctrl.deviceAutoReserve and shouldAutoReserve:
                 t.reserveAllDevices(autoReserve=True)
             devices.update(t.getReservedDevices())
         return devices
