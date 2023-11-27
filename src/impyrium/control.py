@@ -95,7 +95,20 @@ class ControlDial(Control):
     pass #TODO:
 
 class ControlFile(Control):
-    pass #TODO:
+    getFileFun = None
+
+    def runCallback(self, file):
+        print(file)
+
+    def handleGuiEvent(self, event, devList):
+        def fun(file):
+            self.runCallback(file)
+        ControlFile.getFileFun(fun)
+
+    def handleAitpi(self, msg):
+        def fun(file):
+            self.runCallback(file)
+        ControlFile.getFileFun(fun)
 
 class ControlString(Control):
     pass #TODO:
@@ -172,6 +185,9 @@ def registerNewDeviceFun(fun):
     newDeviceFun_ = fun
     global signal_
     pass
+
+def registerGetFileFun(fun):
+    ControlFile.getFileFun = fun
 
 def registerDeviceType(devType):
     DeviceType._deviceTypes[devType.name] = devType

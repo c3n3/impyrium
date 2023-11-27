@@ -9,15 +9,15 @@ TerminalKeyInput.shouldSpawnThreads(True)
 # TerminalKeyInput.setDebug(True)
 
 
-def doSomething(ctrl, event, devlist, arguments=None):
-    print("Sent", ctrl.name, "with", event, devlist, arguments)
+def detect():
+    return [control.Device(0, "Usb device")]
 
-start = time.time()
-def detectUsbs():
-    ret = []
-    for i in range(2):
-        ret.append(control.Device(i, "Usb device"))
-    return ret
+def reserve(device):
+    return
+
+def release(device):
+    return
+
 
 def otherDevices():
     ret = []
@@ -30,18 +30,25 @@ impyrium.init("./test_json/inputs.json", "./test_json/registry.json", "./test_js
 
 # Add all controls and devices
 
-control.registerControl(control.Control("Category1", "Control1", control.ControlButton(), doSomething))
-control.registerControl(control.Control("Category1", "Control2", control.ControlButton(), doSomething))
-control.registerControl(control.Control("Category1", "Control3", control.ControlButton(), doSomething))
-control.registerControl(control.Control("Category2", "Control4", control.ControlButton(), doSomething))
-control.registerControl(control.Control("Category2", "Control5", control.ControlSlider(0, 100, 0.5), doSomething))
-control.registerControl(control.Control("Category2", "Control6", control.ControlSlider(0, 100, 0.5), doSomething))
-control.registerControl(control.Control("Category3", "Control7", control.ControlSlider(-100, 100, 0.5), doSomething))
-control.registerControl(control.Control("Category3", "Control8", control.ControlSlider(0, 100, 0.5), doSomething))
+def doSomething(ctrl, event, devlist):
+    print("Sent", ctrl.name, "with", event, devlist)
+
+control.registerControl(control.ControlButton("Category1", "Control1", doSomething))
+control.registerControl(control.ControlButton("Category1", "Control2", doSomething))
+control.registerControl(control.ControlButton("Category1", "Control3", doSomething))
+control.registerControl(control.ControlFile("Category1", "File", doSomething))
+control.registerControl(control.ControlButton("Category2", "Control4", doSomething))
+control.registerControl(control.ControlSlider("Category2", "Control5", doSomething, sliderRange=control.RangeValue(0, 100, 0.5)))
+control.registerControl(control.ControlSlider("Category2", "Control6", doSomething, sliderRange=control.RangeValue(0, 100, 0.5)))
+control.registerControl(control.ControlSlider("Category3", "Control7", doSomething, sliderRange=control.RangeValue(-100, 100, 0.5)))
+control.registerControl(control.ControlSlider("Category3", "Control8", doSomething, sliderRange=control.RangeValue(0, 100, 0.5)))
 
 usbDevices = control.DeviceType(
     "Usb device",
-    detector=detectUsbs,
+    detector=detect,
+    releaseDeviceFun=release,
+    reserveDeviceFun=reserve,
+    autoReservationTimeout=5,
     controlCategories=["Category1"]
 )
 

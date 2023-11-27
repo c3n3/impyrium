@@ -9,9 +9,13 @@ from . import device_thread
 from . import control
 from .worker_thread import WorkerThread
 
-from PyQt6.QtCore import Qt
+import typing
+
+
+from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
     QScrollArea,
+    QFileDialog,
     QApplication,
     QCheckBox,
     QComboBox,
@@ -78,7 +82,7 @@ class ControlsScrollView(QWidget):
         return fun
 
     def getObjectMod(self, ctrl):
-        if type(ctrl) == control.ControlButton:
+        if type(ctrl) == control.ControlButton or type(ctrl) == control.ControlFile:
             button = QPushButton()
             button.setMinimumHeight(25)
             button.setText(ctrl.name)
@@ -254,10 +258,12 @@ class Selectable(QWidget):
 
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
+    ThisisANewThing: typing.ClassVar[pyqtBoundSignal]
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Impyrium")
         self.setMinimumSize(800, 500)
+        self.fileCallback = None
 
         # None registry is the control box
         commands = aitpi.getCommandsByRegistry(None)
@@ -283,12 +289,36 @@ class MainWindow(QMainWindow):
         mainWidget.setLayout(mainLayout)
         device_thread.worker_
         control.registerNewDeviceFun(devList)
+        control.registerGetFileFun(self.setCallback)
+
+        self.objectNameChanged.connect(self.getFile)
 
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
         self.setCentralWidget(mainWidget)
 
         self.isLinux = sys.platform.startswith('linux')
+
+    def setCallback(self, callback):
+        self.fileCallback = callback
+        # TODO: Why of why do my custom pyqtBoundSignals seg fault???
+        print("Callback")
+        self.objectNameChanged.emit("")
+
+
+    def getFile(self, something):
+        print("Made it here")
+        if self.fileCallback is None:
+            return
+        file, _ = QFileDialog.getOpenFileName(
+            None,
+            "Select a file...",
+            "",
+            "All Files (*);;Python Files (*.py)"
+        )
+        print("Here?")
+        self.fileCallback(file)
+        self.fileCallback = None
 
     def selectDevice(self, dev):
         for w in self.selectedDevControls:
