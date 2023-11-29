@@ -54,6 +54,7 @@ class ControlsScrollView(QWidget):
         controls = control.getControls()
         self.worker = WorkerThread()
         self.worker.start()
+        self.count = 0
         if category in controls:
             for c in controls[category]:
                 mod = self.getObjectMod(c)
@@ -62,13 +63,17 @@ class ControlsScrollView(QWidget):
                     continue
                 for item in mod:
                     layout.addWidget(item)
+                    if not c.enabled:
+                        item.hide()
+                    else:
+                        self.count += 1
         else:
             print("Could not find any controls for ", category)
 
-    def generateButtonCallbackFun(self, ctrl):
+    def generateButtonCallbackFun(self, ctrl, event):
         def fun():
             if ctrl.enabled:
-                ctrl.handleGuiEvent(control.ControlEvents.BUTTON_PRESS, control.DeviceType.getControlDevList(ctrl, self.autoReserve))
+                ctrl.handleGuiEvent(event, control.DeviceType.getControlDevList(ctrl, self.autoReserve))
         return fun
 
     def generateSliderCallbackFun(self, ctrl):
@@ -86,7 +91,8 @@ class ControlsScrollView(QWidget):
             button = QPushButton()
             button.setMinimumHeight(25)
             button.setText(ctrl.name)
-            button.released.connect(self.generateButtonCallbackFun(ctrl))
+            button.pressed.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_PRESS))
+            button.released.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_RELEASE))
             return [button]
         if type(ctrl) == control.ControlSlider:
             ret = QSlider(Qt.Orientation.Horizontal)
@@ -107,11 +113,16 @@ class ControlsTypeSection(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         button = QPushButton(self)
         button.setText(category + " ↓")
-        self.showing = True
         button.clicked.connect(self.buttonPressed)
         layout.addWidget(button)
         self.controlsView = ControlsScrollView(category, autoReserve)
-        self.controlsView.show()
+        if self.controlsView.count > 0:
+            self.showing = True
+            self.controlsView.show()
+        else:
+            self.showing = False
+            self.controlsView.hide()
+
         layout.addWidget(self.controlsView)
 
     def buttonPressed(self):
@@ -173,7 +184,6 @@ class DeviceList(QScrollArea):
         self.widgetList.append(widget)
 
     def clearWidgets(self):
-        print("Cleared")
         for w in self.widgetList:
             w.setStyleSheet("")
             for child in w.children():
@@ -225,7 +235,6 @@ class DeviceList(QScrollArea):
             if len(reserved) > 0:
                 reservedLabel.setText(f"{t} reserved:")
                 self.addWidgetToLayout(reservedLabel)
-            print("Reserved", reserved)
             for dev in reserved:
                 miniWidget = QWidget(self)
                 button = QPushButton(miniWidget)

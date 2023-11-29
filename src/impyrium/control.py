@@ -73,9 +73,8 @@ class Control():
         self.enabled = True
 
     def consume(self, msg):
-        if not self.enabled:
-            return
-        self.handleAitpi(msg)
+        if self.enabled:
+            self.handleAitpi(msg)
 
     def handleGuiEvent(self, event, devList):
         if self.enabled:

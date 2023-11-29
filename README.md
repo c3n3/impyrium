@@ -5,7 +5,6 @@ and integrating everything into keyboard shortcuts
 ## Getting started
 ```
 pip3 install watchdog
-pip3 install aitpi
 pip3 install pynput
 pip3 install pyqt6
 ```
