@@ -69,6 +69,7 @@ class InputControl(QWidget, QObject):
         layout = QVBoxLayout()
         label = QLabel(self.inputTrigger)
         self.combo = QComboBox()
+        self.combo.view().setAutoScroll(False)
         self.combo.addItem('<Unset>', '')
         i = 0
         self.commands = []
@@ -93,6 +94,7 @@ class InputControl(QWidget, QObject):
         delButton.setText('X')
         delButton.clicked.connect(self.deleteClicked)
         topLayout.addWidget(delButton)
+
 
     def updateInput(self, index):
         if index == 0:

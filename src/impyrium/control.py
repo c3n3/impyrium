@@ -70,6 +70,9 @@ class Control():
         self.inputType = "button"
         self.enabled = enabled
 
+    def getValue(self):
+        pass
+
     def disable(self):
         self.enabled = False
 
@@ -101,9 +104,17 @@ class ControlFile(Control):
     fileQueue : ThreadSafeQueue = None
     allFiles = "All Files (*)"
 
+    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True, directory=""):
+        super().__init__(category, name, sendFun, deviceAutoReserve, enabled)
+        self.file = ""
+        self.dir = directory
+
+    def getValue(self):
+        return self.file
+
     def runCallback(self):
-        file = pyqt_file.getFile(ControlFile.allFiles)
-        if file is not None and file != "":
+        self.file = pyqt_file.getFile(ControlFile.allFiles, self.dir)
+        if self.file is not None and self.file != "":
             self.sendFun(self, ControlEvents.VALUE_SET, DeviceType.getControlDevList(self))
 
     def requestFile(self):
