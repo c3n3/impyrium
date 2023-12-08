@@ -134,6 +134,9 @@ class ControlSlider(Control):
         #       min    max       increment
         return (0,     int(counts),   1)
 
+    def setValueFromSlider(self, value):
+        self.range.setValue(self.convertSliderValue(value))
+
     def setValue(self, value):
         self.range.setValue(value)
 
@@ -284,8 +287,9 @@ class DeviceType():
                 # We know the device has already been released
                 return
             self.releaseDeviceFun(device)
-            self.reservedDevices.remove(device)
-            self.sendUpdateSignal()
+            if self.canReserve() and device in self.reservedDevices:
+                self.reservedDevices.remove(device)
+                self.sendUpdateSignal()
 
     def reserveDevice(self, device, autoReserve=False):
         if (self.reserveDeviceFun is not None):

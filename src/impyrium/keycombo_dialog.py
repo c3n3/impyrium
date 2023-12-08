@@ -22,8 +22,6 @@ class KeyComboDialog(QDialog):
             ret.setMinimumWidth(200)
             return ret
 
-
-
         self.results = [createResultLabel(), createResultLabel()]
 
         self.combo = InputlessCombo(self)

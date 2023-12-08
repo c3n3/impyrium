@@ -8,10 +8,11 @@ from .aitpi_widget import Aitpi
 from . import device_thread
 from . import control
 from .worker_thread import WorkerThread
+import os
 
 import typing
 
-
+from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
     QScrollArea,
@@ -39,6 +40,9 @@ from PyQt6.QtWidgets import (
     QTabWidget,
     QHBoxLayout,
 )
+
+def getScriptPath():
+    return os.path.dirname(os.path.realpath(__file__)).replace(os.path.basename(__file__), "")
 
 def printAllOfType(item, t):
     for d in dir(item):
@@ -79,8 +83,10 @@ class ControlsScrollView(QWidget):
     def generateSliderCallbackFun(self, ctrl):
         def fun(value):
             if ctrl.enabled:
-                item = lambda: ctrl.handleGuiEvent(control.ControlEvents.VALUE_SET,
-                                            control.DeviceType.getControlDevList(ctrl, self.autoReserve))
+                def item():
+                    ctrl.setValueFromSlider(value)
+                    ctrl.handleGuiEvent(control.ControlEvents.VALUE_SET, control.DeviceType.getControlDevList(ctrl, self.autoReserve))
+
                 if 'event' in ctrl.data and ctrl.data['event'] is not None:
                     self.worker.removeItem(ctrl.data['event'])
                 ctrl.data['event'] = self.worker.scheduleItem(0.5, item)
@@ -286,9 +292,11 @@ class MainWindow(QMainWindow):
         mainLayout = QHBoxLayout()
         tabwidget = QTabWidget()
 
-        tabwidget.addTab(Aitpi(self), "Shortcuts")
-        tabwidget.addTab(view2, "Global Controls")
+        self.setWindowIcon(QtGui.QIcon(f"{getScriptPath()}/../../graphics/imperium.jpg"))
+
         tabwidget.addTab(self.currentControlList, "Device Controls")
+        tabwidget.addTab(view2, "Global Controls")
+        tabwidget.addTab(Aitpi(self), "Shortcuts")
         devList = DeviceList(self, self.selectDevice)
         mainLayout.addWidget(devList)
         mainLayout.addWidget(tabwidget)
