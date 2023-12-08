@@ -31,7 +31,7 @@ impyrium.init("./test_json/inputs.json", "./test_json/registry.json", "./test_js
 # Add all controls and devices
 
 def doSomething(ctrl, event, devlist):
-    print("Sent", ctrl.name, "with", event, devlist)
+    print("Got", ctrl.name, "with", event, devlist)
 
 control.registerControl(control.ControlButton("Category1", "Control1", doSomething))
 control.registerControl(control.ControlButton("Category1", "Control2", doSomething))

@@ -4,6 +4,7 @@ import time
 from .aitpi.src.aitpi import router
 from .aitpi.src import aitpi
 
+from .thread_safe_queue import ThreadSafeQueue
 from .aitpi_widget import Aitpi
 from . import device_thread
 from . import control
@@ -13,7 +14,7 @@ import os
 import typing
 
 from PyQt6 import QtGui
-from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
 from PyQt6.QtWidgets import (
     QScrollArea,
     QFileDialog,
@@ -306,9 +307,14 @@ class MainWindow(QMainWindow):
         mainWidget.setLayout(mainLayout)
         device_thread.worker_
         control.registerNewDeviceFun(devList)
-        control.registerGetFileFun(self.setCallback)
 
-        self.objectNameChanged.connect(self.getFile)
+
+        self.timer=QTimer()
+        self.timer.timeout.connect(self.queueTimer)
+        self.timer.setInterval(100)
+        self.timer.start()
+        self.queue = ThreadSafeQueue()
+        control.registerFileQueue(self.queue)
 
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
@@ -316,26 +322,11 @@ class MainWindow(QMainWindow):
 
         self.isLinux = sys.platform.startswith('linux')
 
-    def setCallback(self, callback):
-        self.fileCallback = callback
-        # TODO: Why of why do my custom pyqtBoundSignals seg fault???
-        print("Callback")
-        self.objectNameChanged.emit("")
-
-
-    def getFile(self, something):
-        print("Made it here")
-        if self.fileCallback is None:
-            return
-        file, _ = QFileDialog.getOpenFileName(
-            None,
-            "Select a file...",
-            "",
-            "All Files (*);;Python Files (*.py)"
-        )
-        print("Here?")
-        self.fileCallback(file)
-        self.fileCallback = None
+    def queueTimer(self):
+        value = self.queue.pop()
+        while (value != None):
+            value['fun']()
+            value = self.queue.pop()
 
     def selectDevice(self, dev):
         for w in self.selectedDevControls:

@@ -1,6 +1,10 @@
 from .aitpi.src import aitpi
 from .aitpi.src.aitpi import router
 
+from .thread_safe_queue import ThreadSafeQueue
+
+from . import pyqt_file
+
 from . import device_thread
 from enum import Enum
 
@@ -94,20 +98,29 @@ class ControlDial(Control):
     pass #TODO:
 
 class ControlFile(Control):
-    getFileFun = None
+    fileQueue : ThreadSafeQueue = None
+    allFiles = "All Files (*)"
 
-    def runCallback(self, file):
-        print(file)
+    def runCallback(self):
+        file = pyqt_file.getFile(ControlFile.allFiles)
+        if file is not None and file != "":
+            self.sendFun(self, ControlEvents.VALUE_SET, DeviceType.getControlDevList(self))
+
+    def requestFile(self):
+        ControlFile.fileQueue.put({
+            "fun": self.runCallback,
+            "file_types": ControlFile.allFiles,
+        })
 
     def handleGuiEvent(self, event, devList):
-        def fun(file):
-            self.runCallback(file)
-        ControlFile.getFileFun(fun)
+        if event == ControlEvents.BUTTON_PRESS:
+            return
+        self.requestFile()
 
     def handleAitpi(self, msg):
-        def fun(file):
-            self.runCallback(file)
-        ControlFile.getFileFun(fun)
+        if msg.event == aitpi.BUTTON_PRESS:
+            return
+        self.requestFile()
 
 class ControlString(Control):
     pass #TODO:
@@ -188,8 +201,8 @@ def registerNewDeviceFun(fun):
     global signal_
     pass
 
-def registerGetFileFun(fun):
-    ControlFile.getFileFun = fun
+def registerFileQueue(fun):
+    ControlFile.fileQueue = fun
 
 def registerDeviceType(devType):
     DeviceType._deviceTypes[devType.name] = devType
