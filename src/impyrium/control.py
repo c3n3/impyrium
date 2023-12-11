@@ -118,6 +118,7 @@ class ControlFile(Control):
             self.sendFun(self, ControlEvents.VALUE_SET, DeviceType.getControlDevList(self))
 
     def requestFile(self):
+        print("Requesting file?")
         ControlFile.fileQueue.put({
             "fun": self.runCallback,
             "file_types": ControlFile.allFiles,
@@ -131,7 +132,8 @@ class ControlFile(Control):
     def handleAitpi(self, msg):
         if msg.event == aitpi.BUTTON_PRESS:
             return
-        self.requestFile()
+        if (msg.name == self.name):
+            self.requestFile()
 
 class ControlString(Control):
     pass #TODO:
