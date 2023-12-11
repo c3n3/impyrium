@@ -1,3 +1,9 @@
+from . import defaults
+from .default_file import DefaultFile
+import platform
+
+ahkGetFile = DefaultFile(f"{defaults.WINDOWS_SCRIPTS_FOLDER}/{defaults.GET_FILE_AHK_SCRIPT_FILE}",
+"""
 #Requires AutoHotkey v1.1
 
 #NoEnv
@@ -11,7 +17,7 @@ GroupAdd, ExplorerDesktopGroup, ahk_class Progman
 GroupAdd, ExplorerDesktopGroup, ahk_class WorkerW
 
 ; Write currently selected file to a file passed to the script by argument
-FileAppend, % Explorer_GetSelection(), %1%
+FileAppend, %% Explorer_GetSelection(), %%1%%
 return
 
 Explorer_GetSelection() {
@@ -31,4 +37,6 @@ Explorer_GetSelection() {
         result .= (result = "" ? "" : "`n") . item.Path
     Return result
 }
-
+""",
+shouldWriteFun = lambda: platform.system() == "Windows"
+)

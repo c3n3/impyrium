@@ -11,3 +11,4 @@ build
 _test_.py
 impyre/
 run_experimental.py
+windows_scripts/
