@@ -17,7 +17,7 @@ GroupAdd, ExplorerDesktopGroup, ahk_class Progman
 GroupAdd, ExplorerDesktopGroup, ahk_class WorkerW
 
 ; Write currently selected file to a file passed to the script by argument
-FileAppend, %% Explorer_GetSelection(), %%1%%
+FileAppend, % Explorer_GetSelection(), %1%
 return
 
 Explorer_GetSelection() {
@@ -38,5 +38,6 @@ Explorer_GetSelection() {
     Return result
 }
 """,
+isExample = False,
 shouldWriteFun = lambda: platform.system() == "Windows"
 )

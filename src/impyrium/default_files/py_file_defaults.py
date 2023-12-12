@@ -22,7 +22,7 @@ def detectUsbs():
     return ret
 
 
-impyrium.init("{defaults.JSON_FOLDER}/{defaults.INPUTS_FILE}", "{defaults.JSON_FOLDER}/{defaults.REGISTRY_FILE}", "{defaults.JSON_FOLDER}/{defaults.FOLDER_COMMANDS_FILE}")
+impyrium.init("./", "{defaults.JSON_FOLDER}/{defaults.INPUTS_FILE}", "{defaults.JSON_FOLDER}/{defaults.REGISTRY_FILE}", "{defaults.JSON_FOLDER}/{defaults.FOLDER_COMMANDS_FILE}")
 
 # Add all controls and devices
 
