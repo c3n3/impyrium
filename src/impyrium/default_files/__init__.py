@@ -17,6 +17,4 @@ def writeFiles(parentFolder, createExamples):
             p = os.path.dirname(f"{parentFolder}/{file.path}")
             if not os.path.exists(p):
                 os.makedirs(p, exist_ok=True)
-                file.write(parentFolder)
-        else:
-            print("Should not write", file.path)
+            file.write()

@@ -3,6 +3,7 @@ import sys
 from . import control
 from . import device_thread
 from . import main_menu
+from . import default_files
 
 from .aitpi.src.aitpi import router
 from .aitpi.src import aitpi

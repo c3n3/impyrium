@@ -18,7 +18,6 @@ class DefaultFile():
         self.parentFolder = parent
 
     def write(self):
-        self.parentFolder = parentFolder
         print("Writing", self.getPath())
         with open(self.getPath(), 'w') as f:
             f.write(self.contents)

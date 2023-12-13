@@ -5,7 +5,7 @@ runFile = DefaultFile(f"run.py",
 f"""\
 import time
 import impyrium
-from .aitpi.src import aitpi
+from impyrium.aitpi.src import aitpi
 from impyrium import control
 import os
 
@@ -15,10 +15,10 @@ def doSomething(ctrl, event, devlist):
 start = time.time()
 def detectUsbs():
     seconds = time.time() - start
-    seconds = min(10, int(seconds / 5))
+    seconds = min(2, int(seconds / 5))
     ret = []
     for i in range(seconds):
-        ret.append(control.Device(i))
+        ret.append(control.Device(i, "Usb device"))
     return ret
 
 
@@ -26,15 +26,19 @@ impyrium.init("./", "{defaults.JSON_FOLDER}/{defaults.INPUTS_FILE}", "{defaults.
 
 # Add all controls and devices
 
-control.registerControl(control.Control("Category1", "Control1", control.CONTROL_BUTTON, doSomething))
-control.registerControl(control.Control("Category1", "Control2", control.CONTROL_BUTTON, doSomething))
-control.registerControl(control.Control("Category1", "Control3", control.CONTROL_BUTTON, doSomething))
-control.registerControl(control.Control("Category2", "Control4", control.CONTROL_BUTTON, doSomething))
-control.registerControl(control.Control("Category2", "Control5", control.CONTROL_SLIDER, doSomething))
-control.registerControl(control.Control("Category2", "Control6", control.CONTROL_SLIDER, doSomething))
-control.registerControl(control.Control("Category3", "Control7", control.CONTROL_SLIDER, doSomething))
-control.registerControl(control.Control("Category3", "Control8", control.CONTROL_SLIDER, doSomething))
-control.registerDeviceType(control.DeviceType("Usb device", detectUsbs, releaseDeviceFun=lambda x: print("Release", x)))
+control.registerControl(control.ControlButton("Category1", "Control1", doSomething))
+control.registerControl(control.ControlButton("Category1", "Control2", doSomething))
+control.registerControl(control.ControlButton("Category1", "Control3", doSomething))
+control.registerControl(control.ControlButton("Category2", "Control4", doSomething))
+control.registerControl(control.ControlSlider("Category2", "Control5", doSomething, control.RangeValue(0, 100, 1)))
+control.registerControl(control.ControlSlider("Category2", "Control6", doSomething, control.RangeValue(0, 100, 1)))
+control.registerControl(control.ControlSlider("Category3", "Control7", doSomething, control.RangeValue(0, 100, 1)))
+control.registerControl(control.ControlSlider("Category3", "Control8", doSomething, control.RangeValue(0, 100, 1)))
+control.registerDeviceType(control.DeviceType(
+    "Usb device",
+    controlCategories=["Category1", "Category2"],
+    detector=detectUsbs,
+    releaseDeviceFun=lambda x: print("Release", x)))
 
 def run_py(message):
     if (message.event == aitpi.BUTTON_PRESS and message.attributes['id'] == 'python_commands'):
