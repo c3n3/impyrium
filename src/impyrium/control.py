@@ -3,7 +3,10 @@ from .aitpi.src.aitpi import router
 
 from .thread_safe_queue import ThreadSafeQueue
 
-from . import pyqt_file
+from .aitpi_signal import AitpiSignal
+from . import signals
+
+from .text_display import TextDisplay
 
 from . import device_thread
 from enum import Enum
@@ -112,16 +115,17 @@ class ControlFile(Control):
     def getValue(self):
         return self.file
 
-    def runCallback(self):
-        self.file = pyqt_file.getFile(ControlFile.allFiles, self.dir)
+    def runCallback(self, file):
+        self.file = file
         if self.file is not None and self.file != "":
             self.sendFun(self, ControlEvents.VALUE_SET, DeviceType.getControlDevList(self))
 
     def requestFile(self):
-        print("Requesting file?")
-        ControlFile.fileQueue.put({
+        TextDisplay.print("Requesting file")
+        AitpiSignal.send(signals.GET_FILE, {
             "fun": self.runCallback,
-            "file_types": ControlFile.allFiles,
+            "types": self.allFiles,
+            "directory": self.dir,
         })
 
     def handleGuiEvent(self, event, devList):
@@ -214,9 +218,6 @@ def registerNewDeviceFun(fun):
     global signal_
     pass
 
-def registerFileQueue(fun):
-    ControlFile.fileQueue = fun
-
 def registerDeviceType(devType):
     DeviceType._deviceTypes[devType.name] = devType
     devType.scheduleDetection()
@@ -273,10 +274,7 @@ class DeviceType():
         return self.devices
 
     def sendUpdateSignal(self):
-        global newDeviceFun_
-        if newDeviceFun_ is not None:
-            # TODO: This is really jank
-            newDeviceFun_.objectNameChanged.emit("")
+        AitpiSignal.send(signals.DEVICE_LIST_UPDATE, self.devices)
 
     def detect(self):
         global signal_

@@ -4,12 +4,17 @@ import time
 from .aitpi.src.aitpi import router
 from .aitpi.src import aitpi
 
+from . import helpers
+from .aitpi_signal import AitpiSignal
+from . import signals
 from .thread_safe_queue import ThreadSafeQueue
 from .aitpi_widget import Aitpi
 from . import device_thread
 from . import control
 from .worker_thread import WorkerThread
 import os
+
+from .text_display import TextDisplay
 
 import typing
 
@@ -41,6 +46,13 @@ from PyQt6.QtWidgets import (
     QTabWidget,
     QHBoxLayout,
 )
+
+def getFileConsumer(msg):
+    fun = msg['fun']
+    directory = msg['directory']
+    types = msg['types']
+    file = helpers.getFileFromDialog(types, directory)
+    fun(file)
 
 def getScriptPath():
     return os.path.dirname(os.path.realpath(__file__)).replace(os.path.basename(__file__), "")
@@ -164,11 +176,11 @@ class DeviceList(QScrollArea):
         self.box.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.setWidget(self.widg)
         self.setWidgetResizable(True)
-        self.objectNameChanged.connect(self.newDevices)
         self.widgetList = []
         self.selectedDevice = None
         self.selectedDeviceWidget = None
         self.selectDeviceFun = selectDeviceFun
+        router.addConsumer(signals.DEVICE_LIST_UPDATE, self)
 
     def selectDevice(self, device, widget):
         if self.selectDeviceFun is not None:
@@ -221,6 +233,9 @@ class DeviceList(QScrollArea):
             if self.selectDeviceFun is not None:
                 self.selectDevice(device, widget)
         return fun
+
+    def consume(self, msg):
+        self.newDevices(msg)
 
     def newDevices(self, devTypes):
         # We simply override the argument here
@@ -280,6 +295,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Impyrium")
         self.setMinimumSize(800, 500)
         self.fileCallback = None
+        self.selectedDevice = None
 
         # None registry is the control box
         commands = aitpi.getCommandsByRegistry(None)
@@ -289,9 +305,16 @@ class MainWindow(QMainWindow):
 
         view2 = ItemScrollView([ControlsTypeSection(cat, True) for cat in categories])
         self.currentControlList = ItemScrollView([], self)
+
+        def updateCurrentControlList(devlist):
+            if self.selectedDevice is not None and self.selectedDevice not in devlist:
+                self.selectDevice(None)
+        router.addConsumer(signals.DEVICE_LIST_UPDATE, updateCurrentControlList)
+
         mainWidget = QWidget()
         mainLayout = QHBoxLayout()
         tabwidget = QTabWidget()
+        textDisplay = TextDisplay()
 
         self.setWindowIcon(QtGui.QIcon(f"{getScriptPath()}/../../graphics/imperium.jpg"))
 
@@ -301,20 +324,18 @@ class MainWindow(QMainWindow):
         devList = DeviceList(self, self.selectDevice)
         mainLayout.addWidget(devList)
         mainLayout.addWidget(tabwidget)
+        mainLayout.addWidget(textDisplay)
 
         self.selectedDevControls = []
 
         mainWidget.setLayout(mainLayout)
-        device_thread.worker_
-        control.registerNewDeviceFun(devList)
+        router.addConsumer([signals.GET_FILE], getFileConsumer)
 
 
         self.timer=QTimer()
-        self.timer.timeout.connect(self.queueTimer)
+        self.timer.timeout.connect(self.signalTimer)
         self.timer.setInterval(100)
         self.timer.start()
-        self.queue = ThreadSafeQueue()
-        control.registerFileQueue(self.queue)
 
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
@@ -322,13 +343,11 @@ class MainWindow(QMainWindow):
 
         self.isLinux = sys.platform.startswith('linux')
 
-    def queueTimer(self):
-        value = self.queue.pop()
-        while (value != None):
-            value['fun']()
-            value = self.queue.pop()
+    def signalTimer(self):
+        AitpiSignal.run()
 
     def selectDevice(self, dev):
+        self.selectedDevice = dev
         for w in self.selectedDevControls:
             self.currentControlList.removeItem(w)
         self.selectedDevControls.clear()
