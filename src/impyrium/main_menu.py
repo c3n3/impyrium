@@ -250,7 +250,7 @@ class DeviceList(QScrollArea):
             for dev in unreserved:
                 button = QPushButton(self)
                 button.clicked.connect(self.generateReservationHandleFun(dev, devTypes[t]))
-                button.setText(str(dev.uid))
+                button.setText(dev.getName())
                 self.addWidgetToLayout(button)
             reservedLabel = QLabel(self)
             reserved = devTypes[t].getReservedDevices()
@@ -264,7 +264,7 @@ class DeviceList(QScrollArea):
                 miniWidget.setLayout(miniLayout)
 
                 button.clicked.connect(self.generateReleaseHandleFun(dev, devTypes[t], miniWidget))
-                button.setText(str(dev.uid))
+                button.setText(dev.getName())
                 miniLayout.addWidget(button)
 
                 if self.selectDeviceFun is not None:

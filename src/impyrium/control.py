@@ -188,8 +188,11 @@ class ControlSlider(Control):
 
 # Simple helper class that defines a devices unique id, and stores reservation state
 class Device():
-    def __init__(self, uid, deviceType):
+    def __init__(self, uid, deviceType, name=None):
         self.uid = uid
+        self.name = name
+        if self.name is None:
+            self.name = str(self.uid)
         if type(deviceType) == str:
             deviceType = DeviceType._deviceTypes[deviceType]
         if type(deviceType) != DeviceType:
@@ -197,6 +200,9 @@ class Device():
         self.deviceType = deviceType
         self.reserveTask = None
         self.reserveTime = 0.0
+
+    def getName(self):
+        return self.name
 
     def __str__(self):
         return f"<{self.uid}>"
