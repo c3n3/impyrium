@@ -61,3 +61,7 @@ def start():
     window = main_menu.MainWindow()
     window.show()
     app.exec()
+
+def getTempFolder():
+    global _tempFolder
+    return _tempFolder

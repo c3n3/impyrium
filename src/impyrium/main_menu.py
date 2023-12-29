@@ -14,6 +14,8 @@ from . import control
 from .worker_thread import WorkerThread
 import os
 
+from . import meta_files
+
 from .text_display import TextDisplay
 
 import typing
@@ -316,7 +318,7 @@ class MainWindow(QMainWindow):
         tabwidget = QTabWidget()
         textDisplay = TextDisplay()
 
-        self.setWindowIcon(QtGui.QIcon(f"{getScriptPath()}/../../graphics/imperium.jpg"))
+        self.setWindowIcon(QtGui.QIcon(meta_files.getFile("logo")))
 
         tabwidget.addTab(self.currentControlList, "Device Controls")
         tabwidget.addTab(view2, "Global Controls")
