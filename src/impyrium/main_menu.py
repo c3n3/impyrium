@@ -135,6 +135,7 @@ class ControlsTypeSection(QWidget):
         button = QPushButton(self)
         button.setText(category + " ↓")
         button.clicked.connect(self.buttonPressed)
+        layout.setContentsMargins(0, 5, 0, 5)
         layout.addWidget(button)
         self.controlsView = ControlsScrollView(category, autoReserve)
         if self.controlsView.count > 0:
@@ -306,7 +307,10 @@ class MainWindow(QMainWindow):
             categories.add(c['id'])
 
         view2 = ItemScrollView([ControlsTypeSection(cat, True) for cat in categories])
+        view2.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.currentControlList = ItemScrollView([], self)
+        self.currentControlList.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+
 
         def updateCurrentControlList(devlist):
             if self.selectedDevice is not None and self.selectedDevice not in devlist:
@@ -320,9 +324,9 @@ class MainWindow(QMainWindow):
 
         self.setWindowIcon(QtGui.QIcon(meta_files.getFile("logo")))
 
-        tabwidget.addTab(self.currentControlList, "Device Controls")
-        tabwidget.addTab(view2, "Global Controls")
-        tabwidget.addTab(Aitpi(self), "Shortcuts")
+        tabwidget.addTab(self.currentControlList, "Device")
+        tabwidget.addTab(view2, "Global")
+        tabwidget.addTab(Aitpi(self), "Keys")
         devList = DeviceList(self, self.selectDevice)
         mainLayout.addWidget(devList)
         mainLayout.addWidget(tabwidget)
