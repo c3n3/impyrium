@@ -145,8 +145,37 @@ class ControlString(Control):
 class ControlDate(Control):
     pass #TODO:
 
-class ControlEnum(Control):
-    pass #TODO:
+class ControlSelector(ControlButton):
+    def __init__(self, category, name, sendFun, items, deviceAutoReserve=False, enabled=True):
+        super().__init__(category, name, sendFun, deviceAutoReserve, enabled)
+        self.items = items
+        self.name = name
+        self.sendFun = sendFun
+        self.value = None
+
+    def runCallback(self, result):
+        self.value = result
+        self.sendFun(self, ControlEvents.VALUE_SET, DeviceType.getControlDevList(self))
+
+    def requestSelection(self, devices=None):
+        TextDisplay.print("Popping up selection")
+        AitpiSignal.send(signals.SELECT_ITEM, {
+            "items": self.items,
+            "name": self.name,
+            "fun": self.runCallback,
+            "devices": devices,
+        })
+
+    def handleGuiEvent(self, event, devList):
+        if event == ControlEvents.BUTTON_PRESS:
+            return
+        self.requestSelection(devList)
+
+    def handleAitpi(self, msg):
+        if msg.event == aitpi.BUTTON_PRESS:
+            return
+        if (msg.name == self.name):
+            self.requestSelection()
 
 class ControlSlider(Control):
     def __init__(self, category, name, sendFun, sliderRange : RangeValue, deviceAutoReserve=False) -> None:

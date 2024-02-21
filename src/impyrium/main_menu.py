@@ -4,6 +4,8 @@ import time
 from .aitpi.src.aitpi import router
 from .aitpi.src import aitpi
 
+from .aitpi_signal import AitpiSignalExecutor
+
 from . import helpers
 from .aitpi_signal import AitpiSignal
 from . import signals
@@ -51,12 +53,23 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
 )
 
+from .popups.single_select_dialog import SingleSelectDialog
+
 def getFileConsumer(msg):
     fun = msg['fun']
     directory = msg['directory']
     types = msg['types']
     file = helpers.getFileFromDialog(types, directory)
     fun(file)
+
+def selectItemConsumer(msg):
+    fun = msg['fun']
+    items = msg['items']
+    name = msg['name']
+    devices = msg['devices']
+    dialog = SingleSelectDialog(fun, name, items, devices)
+    res = dialog.popUp()
+    fun(res)
 
 def getScriptPath():
     return os.path.dirname(os.path.realpath(__file__)).replace(os.path.basename(__file__), "")
@@ -110,7 +123,7 @@ class ControlsScrollView(QWidget):
         return fun
 
     def getObjectMod(self, ctrl):
-        if type(ctrl) == control.ControlButton or type(ctrl) == control.ControlFile:
+        if type(ctrl) == control.ControlButton or type(ctrl) == control.ControlFile or issubclass(type(ctrl), control.ControlButton):
             button = QPushButton()
             button.setMinimumHeight(25)
             button.setText(ctrl.name)
@@ -284,6 +297,8 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(800, 500)
         self.fileCallback = None
         self.selectedDevice = None
+        self.signalExec = AitpiSignalExecutor()
+        self.signalExec.start()
 
         # None registry is the control box
         commands = aitpi.getCommandsByRegistry(None)
@@ -321,21 +336,13 @@ class MainWindow(QMainWindow):
 
         mainWidget.setLayout(mainLayout)
         router.addConsumer([signals.GET_FILE], getFileConsumer)
-
-
-        self.timer=QTimer()
-        self.timer.timeout.connect(self.signalTimer)
-        self.timer.setInterval(100)
-        self.timer.start()
+        router.addConsumer([signals.SELECT_ITEM], selectItemConsumer)
 
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
         self.setCentralWidget(mainWidget)
 
         self.isLinux = sys.platform.startswith('linux')
-
-    def signalTimer(self):
-        AitpiSignal.run()
 
     def selectDevice(self, dev):
         self.selectedDevice = dev
