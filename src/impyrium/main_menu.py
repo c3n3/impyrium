@@ -18,6 +18,8 @@ from . import meta_files
 
 from .text_display import TextDisplay
 
+from .widgets.item_scroll_view import ItemScrollView
+
 import typing
 
 from PyQt6 import QtGui
@@ -153,23 +155,6 @@ class ControlsTypeSection(QWidget):
             self.controlsView.show()
         else:
             self.controlsView.hide()
-
-class ItemScrollView(QScrollArea):
-    def __init__(self, items, parent: QWidget = None) -> None:
-        super(ItemScrollView, self).__init__(parent)
-        widget = QWidget()
-        self.mainLayout = QVBoxLayout(widget)
-        self.mainLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        for item in items:
-            self.mainLayout.addWidget(item)
-        self.setWidget(widget)
-        self.setWidgetResizable(True)
-
-    def addItem(self, item):
-        self.mainLayout.addWidget(item)
-
-    def removeItem(self, item):
-        self.mainLayout.removeWidget(item)
 
 class DeviceList(QScrollArea):
     def __init__(self, parent: QWidget = None, selectDeviceFun = None) -> None:
