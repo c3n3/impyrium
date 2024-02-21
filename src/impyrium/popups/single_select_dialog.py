@@ -7,12 +7,12 @@ from ..inputless_combo import InputlessCombo
 from ..aitpi.src import aitpi
 from ..aitpi_signal import AitpiSignal, AitpiSignalExecutor
 import pynput
+from .popup import Popup
 
-class SingleSelectDialog(QDialog):
+class SingleSelectDialog(Popup):
     def __init__(self, doneFun, name, items, devices, parent: QWidget = None):
         super().__init__(parent)
         self.doneFun = doneFun
-        self.msgId = "SINGLE_SELECT_DIALOG"
         self.mainLayout = QVBoxLayout(self)
         self.instructions = QLabel(self)
         self.name = name
@@ -21,13 +21,7 @@ class SingleSelectDialog(QDialog):
         self.setWindowTitle(self.name)
         self.setMinimumWidth(450)
 
-        self.signalExecutor = AitpiSignalExecutor()
-        self.signalExecutor.start()
-
-        aitpi.registerKeyHandler(self.handleKeyEvent)
-
         self.index = None
-
         self.devcombo = InputlessCombo(self)
         self.items = items
         for item in self.items:
@@ -39,8 +33,6 @@ class SingleSelectDialog(QDialog):
         self.mainLayout.addWidget(self.instructions)
         self.mainLayout.addWidget(self.devcomboLabel)
         self.mainLayout.addWidget(self.devcombo)
-
-        aitpi.router.addConsumer([self.msgId], self)
 
         selectionItems = []
         idx = 0
@@ -76,7 +68,7 @@ class SingleSelectDialog(QDialog):
                     idx = 0
                 else:
                     idx = (self.index + 1) % len(self.items)
-                AitpiSignal.send(self.msgId, ("INDEX", idx))
+                self.msgQt(("INDEX", idx))
             elif char == pynput.keyboard.Key.up:
                 idx = None
                 if self.index is None:
@@ -85,9 +77,9 @@ class SingleSelectDialog(QDialog):
                     idx = self.index - 1
                     if idx < 0:
                         idx = len(self.items) - 1
-                AitpiSignal.send(self.msgId, ("INDEX", idx))
+                self.msgQt(("INDEX", idx))
             elif char == pynput.keyboard.Key.enter: # event.key() == 0x01000004 or event.key() == 0x01000005: # Enter or return
-                AitpiSignal.send(self.msgId, ("CLOSE", self.index))
+                self.msgQt(("CLOSE", self.index))
 
     def setIndex(self, idx):
         if idx == self.index:
@@ -114,19 +106,6 @@ class SingleSelectDialog(QDialog):
         if self.index is not None:
             return self.items[self.index]
         return None
-
-    def end(self):
-        aitpi.removeKeyHandler(self.handleKeyEvent)
-        aitpi.router.removeConsumer([self.msgId], self)
-        self.signalExecutor.stop()
-
-    def closeEvent(self, event):
-        self.end()
-        event.accept()
-
-    def close(self):
-        self.end()
-        super().close()
 
 if __name__ == '__main__':
     class TestApp(QMainWindow):
