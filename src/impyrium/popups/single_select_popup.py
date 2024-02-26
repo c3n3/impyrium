@@ -1,15 +1,14 @@
 import sys
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QComboBox, QHBoxLayout
-from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel
+from PyQt6.QtCore import QTimer
 from ..widgets.item_scroll_view import ItemScrollView
 from ..inputless_combo import InputlessCombo
 from ..aitpi.src import aitpi
-from ..aitpi_signal import AitpiSignal, AitpiSignalExecutor
+from ..aitpi_signal import AitpiSignal
 import pynput
 from .popup import Popup
 
-class SingleSelectDialog(Popup):
+class SingleSelectPopup(Popup):
     def __init__(self, doneFun, name, items, devices, parent: QWidget = None):
         super().__init__(parent)
         self.doneFun = doneFun
@@ -40,7 +39,7 @@ class SingleSelectDialog(Popup):
             button = QPushButton(self)
             button.setMinimumHeight(25)
             button.setText(item)
-            button.pressed.connect(self.generateButtonCallbackFun(idx))
+            button.clicked.connect(self.generateButtonCallbackFun(idx))
             idx += 1
             selectionItems.append(button)
 
@@ -128,7 +127,7 @@ if __name__ == '__main__':
             print(t, item)
 
         def button_clicked(self, s):
-            dlg = SingleSelectDialog(self.addInput, "Something", ["one", "two"], ["90", "100"], self)
+            dlg = SingleSelectPopup(self.addInput, "Something", ["one", "two"], ["90", "100"], self)
             dlg.exec()
 
     app = QApplication(sys.argv)

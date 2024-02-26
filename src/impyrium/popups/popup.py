@@ -16,10 +16,27 @@ class Popup(QDialog):
         self.signalExecutor = AitpiSignalExecutor()
         self.signalExecutor.start()
         aitpi.registerKeyHandler(self.handleKeyEvent)
+
+        # A slight hack, but we provide an interface to msg the QT thread
+        # We could potentially create a new system for this
         self.id = Popup.popupCount
         Popup.popupCount += 1
         self.msgId = f"POPUP_{self.id}"
         aitpi.router.addConsumer([self.msgId], self)
+
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        QTimer.singleShot(1,self.focusAndShowWindow)
+
+    def focusAndShowWindow(self):
+        if self.windowState() != Qt.WindowState.WindowMaximized:
+            self.showMaximized()
+            self.showNormal()
+        else:
+            self.showNormal()
+            self.showMaximized()
+
+        self.raise_()
+        self.activateWindow()
 
     # Required to allow us to handle on a QT thread
     def consume(self, msg):

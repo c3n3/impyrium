@@ -53,7 +53,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
 )
 
-from .popups.single_select_dialog import SingleSelectDialog
+from .popups.single_select_popup import SingleSelectPopup
 
 def getFileConsumer(msg):
     fun = msg['fun']
@@ -67,7 +67,7 @@ def selectItemConsumer(msg):
     items = msg['items']
     name = msg['name']
     devices = msg['devices']
-    dialog = SingleSelectDialog(fun, name, items, devices)
+    dialog = SingleSelectPopup(fun, name, items, devices)
     res = dialog.popUp()
     fun(res)
 
@@ -341,7 +341,6 @@ class MainWindow(QMainWindow):
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
         self.setCentralWidget(mainWidget)
-
         self.isLinux = sys.platform.startswith('linux')
 
     def selectDevice(self, dev):

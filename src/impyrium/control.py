@@ -155,7 +155,8 @@ class ControlSelector(ControlButton):
 
     def runCallback(self, result):
         self.value = result
-        self.sendFun(self, ControlEvents.VALUE_SET, DeviceType.getControlDevList(self))
+        if result is not None:
+            self.sendFun(self, ControlEvents.VALUE_SET, DeviceType.getControlDevList(self))
 
     def requestSelection(self, devices=None):
         TextDisplay.print("Popping up selection")
