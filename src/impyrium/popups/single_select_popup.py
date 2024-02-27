@@ -15,16 +15,24 @@ class SingleSelectPopup(Popup):
         self.mainLayout = QVBoxLayout(self)
         self.instructions = QLabel(self)
         self.name = name
-        self.devices = devices
+        if len(devices) == 1:
+            self.devices = devices
+        else:
+            self.devices = ["All", *devices]
         self.instructions.setText(name)
         self.setWindowTitle(self.name)
         self.setMinimumWidth(450)
 
+        self.devIndex = 0
         self.index = None
         self.devcombo = InputlessCombo(self)
         self.items = items
-        for item in self.items:
-            self.devcombo.addItem(item)
+        print(self.devices)
+        for dev in self.devices:
+            if type(dev) is str:
+                self.devcombo.addItem(dev)
+            else:
+                self.devcombo.addItem(dev.getName())
         self.devcombo.currentIndexChanged.connect(self.changeType)
         self.devcomboLabel = QLabel("Select Device")
         self.devcomboLabel.setBuddy(self.devcombo)
@@ -97,14 +105,17 @@ class SingleSelectPopup(Popup):
         return fun
 
     def changeType(self, index):
-        print(index)
+        self.devIndex = index
         self.update()
 
     def popUp(self):
         super().exec()
+        dev = []
+        if self.devIndex != 0:
+            dev = [self.devices[self.devIndex]]
         if self.index is not None:
-            return self.items[self.index]
-        return None
+            return dev, self.items[self.index]
+        return dev, None
 
 if __name__ == '__main__':
     class TestApp(QMainWindow):

@@ -69,9 +69,10 @@ def selectItemConsumer(msg):
     items = msg['items']
     name = msg['name']
     devices = msg['devices']
+    print("GOT DEVS", devices)
     dialog = SingleSelectPopup(fun, name, items, devices)
-    res = dialog.popUp()
-    fun(res)
+    devs, res = dialog.popUp()
+    fun((devs, res))
 
 def addStatusEntry(msg):
     action, text = msg

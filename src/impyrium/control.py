@@ -154,12 +154,20 @@ class ControlSelector(ControlButton):
         self.value = None
 
     def runCallback(self, result):
-        self.value = result
-        if result is not None:
-            self.sendFun(self, ControlEvents.VALUE_SET, DeviceType.getControlDevList(self))
+        devs, self.value = result
+        if self.value is None:
+            return
+        if len(devs) == 0:
+            devs = DeviceType.getControlDevList(self)
+        else:
+            for dev in devs:
+                dev.reserve(True)
+        self.sendFun(self, ControlEvents.VALUE_SET, devs)
 
     def requestSelection(self, devices=None):
         TextDisplay.print("Popping up selection")
+        if devices is None or len(devices) == 0:
+            devices = DeviceType.getAllPossibleControlDevList(self)
         AitpiSignal.send(signals.SELECT_ITEM, {
             "items": self.items,
             "name": self.name,
@@ -211,8 +219,7 @@ class ControlSlider(Control):
             elif msg.event == aitpi.ENCODER_RIGHT:
                 self.range.right()
             else:
-                print("Error----")
-                raise Exception(f"Invalid aitpit command {msg.event}")
+                raise Exception(f"Invalid aitpi command {msg.event}")
 
             self.sendFun(self, e, DeviceType.getControlDevList(self))
 
@@ -244,6 +251,9 @@ class Device():
 
     def __hash__(self):
         return self.uid.__hash__()
+
+    def reserve(self, autoReserve=False):
+        self.deviceType.reserveDevice(self, autoReserve)
 
     def isReserved(self):
         return self.deviceType.isDevReserved(self)
@@ -359,6 +369,9 @@ class DeviceType():
             if autoReserve:
                 self.scheduleAutoTimeout(device)
 
+    def getAllDevices(self):
+        return self.devices.union(self.reservedDevices)
+
     @staticmethod
     def getAllDeviceTypes(category):
         ret = []
@@ -375,6 +388,13 @@ class DeviceType():
             if ctrl.deviceAutoReserve and shouldAutoReserve:
                 t.reserveAllDevices(autoReserve=True)
             devices.update(t.getReservedDevices())
+        return devices
+
+    @staticmethod
+    def getAllPossibleControlDevList(ctrl):
+        devices = set()
+        for t in DeviceType.getAllDeviceTypes(ctrl.category):
+            devices.update(t.getAllDevices())
         return devices
 
 def getControls():
