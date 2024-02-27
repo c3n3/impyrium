@@ -35,7 +35,7 @@ class Output():
 class SliderInput(Input):
     def __init__(self, valueChangedFun) -> None:
         self.valueChangedFun = valueChangedFun
-        
+        self.widget = #
 
 class TextInput(Input):
     def __init__(self, valueChangedFun=None):

@@ -1,6 +1,8 @@
 import sys
 import time
 
+from .popups.status_sidebar import StatusSidebar
+
 from .aitpi.src.aitpi import router
 from .aitpi.src import aitpi
 
@@ -70,6 +72,13 @@ def selectItemConsumer(msg):
     dialog = SingleSelectPopup(fun, name, items, devices)
     res = dialog.popUp()
     fun(res)
+
+def addStatusEntry(msg):
+    action, text = msg
+    if action == "REMOVE":
+        StatusSidebar.removeEntry(text)
+    elif action == "ADD":
+        StatusSidebar.addEntry(text)
 
 def getScriptPath():
     return os.path.dirname(os.path.realpath(__file__)).replace(os.path.basename(__file__), "")
@@ -337,6 +346,7 @@ class MainWindow(QMainWindow):
         mainWidget.setLayout(mainLayout)
         router.addConsumer([signals.GET_FILE], getFileConsumer)
         router.addConsumer([signals.SELECT_ITEM], selectItemConsumer)
+        router.addConsumer([signals.ADD_SIDEBAR_STATUS_ENTRY], addStatusEntry)
 
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
@@ -364,4 +374,13 @@ class MainWindow(QMainWindow):
         if self.isLinux:
             aitpi.pyqt6KeyReleaseEvent(event)
 
+    def closeEvent(self, event):
+        self.end()
+        event.accept()
 
+    def close(self):
+        self.end()
+        super().close()
+
+    def end(self):
+        StatusSidebar.stop()

@@ -11,10 +11,13 @@ import pynput
 class Popup(QDialog):
     popupCount = 0
 
-    def __init__(self, parent: QWidget = None):
+    def __init__(self, parent: QWidget = None, executor=True):
         super().__init__(parent)
-        self.signalExecutor = AitpiSignalExecutor()
-        self.signalExecutor.start()
+        if executor:
+            self.signalExecutor = AitpiSignalExecutor()
+            self.signalExecutor.start()
+        else:
+            self.signalExecutor = None
         aitpi.registerKeyHandler(self.handleKeyEvent)
 
         # A slight hack, but we provide an interface to msg the QT thread
@@ -55,7 +58,8 @@ class Popup(QDialog):
     def end(self):
         aitpi.removeKeyHandler(self.handleKeyEvent)
         aitpi.router.removeConsumer([self.msgId], self)
-        self.signalExecutor.stop()
+        if self.signalExecutor is not None:
+            self.signalExecutor.stop()
 
     def closeEvent(self, event):
         self.end()

@@ -1,5 +1,7 @@
 from .default_files import defaults
 from .default_files.ahk_get_file_script import ahkGetFile
+from . import signals
+from .aitpi_signal import AitpiSignal
 
 from PyQt6.QtWidgets import QFileDialog
 
@@ -31,3 +33,9 @@ def getFileFromDialog(types, directory):
         f"{types};;"
     )
     return file
+
+def addStatusEntry(text):
+    AitpiSignal.send(signals.ADD_SIDEBAR_STATUS_ENTRY, ("ADD", text))
+
+def removeStatusEntry(text):
+    AitpiSignal.send(signals.ADD_SIDEBAR_STATUS_ENTRY, ("REMOVE", text))
