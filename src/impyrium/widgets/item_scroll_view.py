@@ -9,6 +9,7 @@ class ItemScrollView(QScrollArea):
     def __init__(self, items, parent: QWidget = None) -> None:
         super(ItemScrollView, self).__init__(parent)
         widget = QWidget()
+
         self.mainLayout = QVBoxLayout(widget)
         self.mainLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.items = items
@@ -17,6 +18,8 @@ class ItemScrollView(QScrollArea):
         self.setWidget(widget)
         self.setWidgetResizable(True)
         self.selectedItems = set()
+        self.mainLayout.setSpacing(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
 
     def addItem(self, item):
         self.mainLayout.addWidget(item)
@@ -29,10 +32,16 @@ class ItemScrollView(QScrollArea):
             return
         widget = self.items[index]
         if index not in self.selectedItems:
-            widget.setStyleSheet("background-color: red")
+            if hasattr(widget, "focus"):
+                widget.focus()
+            else:
+                widget.setStyleSheet("QWidget{ background-color: red }")
             widget.update()
             self.selectedItems.add(index)
         else:
-            widget.setStyleSheet("")
+            if hasattr(widget, "unfocus"):
+                widget.unfocus()
+            else:
+                widget.setStyleSheet("")
             widget.update()
             self.selectedItems.remove(index)

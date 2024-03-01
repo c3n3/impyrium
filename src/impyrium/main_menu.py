@@ -24,6 +24,10 @@ from .text_display import TextDisplay
 
 from .widgets.item_scroll_view import ItemScrollView
 
+from .popups.build_a_popup import BuildAPopup
+
+from . import common_css
+from .widgets.custom_button import ImpPushButton
 import typing
 
 from PyQt6 import QtGui
@@ -44,7 +48,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QProgressBar,
-    QPushButton,
     QRadioButton,
     QSlider,
     QSpinBox,
@@ -69,8 +72,16 @@ def selectItemConsumer(msg):
     items = msg['items']
     name = msg['name']
     devices = msg['devices']
-    print("GOT DEVS", devices)
     dialog = SingleSelectPopup(fun, name, items, devices)
+    devs, res = dialog.popUp()
+    fun((devs, res))
+
+def buildPopupConsumer(msg):
+    fun = msg['fun']
+    name = msg['name']
+    components = msg['components']
+    devices = msg['devices']
+    dialog = BuildAPopup(fun, name, devices, components)
     devs, res = dialog.popUp()
     fun((devs, res))
 
@@ -134,11 +145,12 @@ class ControlsScrollView(QWidget):
 
     def getObjectMod(self, ctrl):
         if type(ctrl) == control.ControlButton or type(ctrl) == control.ControlFile or issubclass(type(ctrl), control.ControlButton):
-            button = QPushButton()
+            button = ImpPushButton()
             button.setMinimumHeight(25)
             button.setText(ctrl.name)
             button.pressed.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_PRESS))
             button.released.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_RELEASE))
+            # button.setStyleSheet(f"QWidget{{ border-bottom: 1px solid grey; }} {common_css.HOVER_EFFECT}")
             return [button]
         if type(ctrl) == control.ControlSlider:
             ret = QSlider(Qt.Orientation.Horizontal)
@@ -149,28 +161,36 @@ class ControlsScrollView(QWidget):
             label = QLabel(ctrl.name)
             ret.valueChanged.connect(self.generateSliderCallbackFun(ctrl))
             label.setBuddy(ret)
+            # ret.setStyleSheet("QWidget{ border-right: 1px solid grey; border-left: 1px solid grey }")
             return [label, ret]
         return None
 
 class ControlsTypeSection(QWidget):
     def __init__(self, category, autoReserve, parent: QWidget = None):
         super().__init__(parent)
-        layout = QVBoxLayout(self)
+        container = QWidget()
+        containerLayout = QVBoxLayout()
+        subwidget = QWidget()
+        layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        button = QPushButton(self)
-        button.setText(category + " ↓")
+        button = ImpPushButton(container)
+        button.setText(category)
         button.clicked.connect(self.buttonPressed)
-        layout.setContentsMargins(0, 5, 0, 5)
+        subwidget.setStyleSheet('QWidget{ border: 1px solid grey; }')
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(button)
         self.controlsView = ControlsScrollView(category, autoReserve)
+        self.controlsView.setStyleSheet(f"QWidget{{ border: revert; }}")
         if self.controlsView.count > 0:
             self.showing = True
             self.controlsView.show()
         else:
             self.showing = False
             self.controlsView.hide()
-
         layout.addWidget(self.controlsView)
+        subwidget.setLayout(layout)
+        containerLayout.addWidget(subwidget)
+        self.setLayout(containerLayout)
 
     def buttonPressed(self):
         self.showing = not self.showing
@@ -259,7 +279,7 @@ class DeviceList(QScrollArea):
                 detectedLabel.setText(f"{t} detected:")
                 self.addWidgetToLayout(detectedLabel)
             for dev in unreserved:
-                button = QPushButton(self)
+                button = ImpPushButton(self)
                 button.clicked.connect(self.generateReservationHandleFun(dev, devTypes[t]))
                 button.setText(dev.getName())
                 self.addWidgetToLayout(button)
@@ -270,7 +290,7 @@ class DeviceList(QScrollArea):
                 self.addWidgetToLayout(reservedLabel)
             for dev in reserved:
                 miniWidget = QWidget(self)
-                button = QPushButton(miniWidget)
+                button = ImpPushButton(miniWidget)
                 miniLayout = QHBoxLayout(miniWidget)
                 miniWidget.setLayout(miniLayout)
 
@@ -279,7 +299,7 @@ class DeviceList(QScrollArea):
                 miniLayout.addWidget(button)
 
                 if self.selectDeviceFun is not None:
-                    deviceButton = QPushButton(miniWidget)
+                    deviceButton = ImpPushButton(miniWidget)
                     deviceButton.clicked.connect(self.generateSelectDeviceFun(dev, miniWidget))
                     deviceButton.setText("Select")
                     miniLayout.addWidget(deviceButton)
@@ -304,6 +324,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Impyrium")
+        self.setStyleSheet(common_css.MAIN_STYLE)
         self.setMinimumSize(800, 500)
         self.fileCallback = None
         self.selectedDevice = None
@@ -327,16 +348,24 @@ class MainWindow(QMainWindow):
                 self.selectDevice(None)
         router.addConsumer(signals.DEVICE_LIST_UPDATE, updateCurrentControlList)
 
-        mainWidget = QWidget()
+        mainWidget = QWidget(self)
         mainLayout = QHBoxLayout()
-        tabwidget = QTabWidget()
-        textDisplay = TextDisplay()
+        tabwidget = QTabWidget(self)
+        textDisplay = TextDisplay(self)
 
         self.setWindowIcon(QtGui.QIcon(meta_files.getFile("logo")))
 
         tabwidget.addTab(self.currentControlList, "Device")
         tabwidget.addTab(view2, "Global")
         tabwidget.addTab(Aitpi(self), "Keys")
+        tabStyle = f""" 
+        QTabBar::tab:selected {{background-color: {common_css.ACCENT_COLOR}; }}
+        QTabBar::tab {{background-color: {common_css.MAIN_COLOR}; }}
+        QTabWidget>QWidget>QWidget{{ background: gray; }}
+        QTabWidget::pane {{ border-top: 2px solid {common_css.ACCENT_COLOR}; }}
+        """
+        # tabwidget.setStyleSheet(f"QWidget{{ background-color: {common_css.MAIN_COLOR} }}")
+        tabwidget.setStyleSheet(tabStyle)
         devList = DeviceList(self, self.selectDevice)
         mainLayout.addWidget(devList)
         mainLayout.addWidget(tabwidget)
@@ -348,6 +377,7 @@ class MainWindow(QMainWindow):
         router.addConsumer([signals.GET_FILE], getFileConsumer)
         router.addConsumer([signals.SELECT_ITEM], selectItemConsumer)
         router.addConsumer([signals.ADD_SIDEBAR_STATUS_ENTRY], addStatusEntry)
+        router.addConsumer([signals.CUSTOM_POPUP], buildPopupConsumer)
 
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.

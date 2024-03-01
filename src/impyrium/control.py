@@ -186,6 +186,46 @@ class ControlSelector(ControlButton):
         if (msg.name == self.name):
             self.requestSelection()
 
+class ControlBuildAPopup(ControlButton):
+    def __init__(self, category, name, sendFun, componentsFun, deviceAutoReserve=False, enabled=True):
+        super().__init__(category, name, sendFun, deviceAutoReserve, enabled)
+        self.componentsFun = componentsFun
+        self.name = name
+        self.sendFun = sendFun
+        self.value = None
+
+    def runCallback(self, result):
+        devs, self.value = result
+        if self.value is None:
+            return
+        if len(devs) == 0:
+            devs = DeviceType.getControlDevList(self)
+        else:
+            for dev in devs:
+                dev.reserve(True)
+        self.sendFun(self, ControlEvents.VALUE_SET, devs)
+
+    def requestPopup(self, devices=None):
+        if devices is None or len(devices) == 0:
+            devices = DeviceType.getAllPossibleControlDevList(self)
+        AitpiSignal.send(signals.CUSTOM_POPUP, {
+            "components": self.componentsFun(),
+            "name": self.name,
+            "fun": self.runCallback,
+            "devices": devices,
+        })
+
+    def handleGuiEvent(self, event, devList):
+        if event == ControlEvents.BUTTON_PRESS:
+            return
+        self.requestPopup(devList)
+
+    def handleAitpi(self, msg):
+        if msg.event == aitpi.BUTTON_PRESS:
+            return
+        if (msg.name == self.name):
+            self.requestPopup()
+
 class ControlSlider(Control):
     def __init__(self, category, name, sendFun, sliderRange : RangeValue, deviceAutoReserve=False) -> None:
         super().__init__(category, name, sendFun, deviceAutoReserve)

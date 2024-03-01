@@ -7,11 +7,14 @@ from ..aitpi.src import aitpi
 from ..aitpi_signal import AitpiSignal
 import pynput
 from .popup import Popup
+from .. import common_css
+from ..widgets.custom_button import ImpPushButton
 
 class SingleSelectPopup(Popup):
     def __init__(self, doneFun, name, items, devices, parent: QWidget = None):
         super().__init__(parent)
         self.doneFun = doneFun
+        self.setStyleSheet(common_css.MAIN_STYLE)
         self.mainLayout = QVBoxLayout(self)
         self.instructions = QLabel(self)
         self.name = name
@@ -27,7 +30,6 @@ class SingleSelectPopup(Popup):
         self.index = None
         self.devcombo = InputlessCombo(self)
         self.items = items
-        print(self.devices)
         for dev in self.devices:
             if type(dev) is str:
                 self.devcombo.addItem(dev)
@@ -44,7 +46,7 @@ class SingleSelectPopup(Popup):
         selectionItems = []
         idx = 0
         for item in self.items:
-            button = QPushButton(self)
+            button = ImpPushButton(self)
             button.setMinimumHeight(25)
             button.setText(item)
             button.clicked.connect(self.generateButtonCallbackFun(idx))
@@ -139,7 +141,7 @@ if __name__ == '__main__':
 
         def button_clicked(self, s):
             dlg = SingleSelectPopup(self.addInput, "Something", ["one", "two"], ["90", "100"], self)
-            dlg.exec()
+            dlg.popUp()
 
     app = QApplication(sys.argv)
 
