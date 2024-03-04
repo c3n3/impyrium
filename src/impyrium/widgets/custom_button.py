@@ -17,8 +17,8 @@ class ImpPushButton(QPushButton):
 
     def getStyle(self):
         return f"""
-        QWidget {{
-            background-color {self.backgroundColor};
+        QPushButton {{
+            background-color: {self.backgroundColor};
         }}
         QPushButton:hover {{
             background-color: {self.highlightColor};
@@ -34,6 +34,6 @@ class ImpPushButton(QPushButton):
 
     def unfocus(self):
         self.highlightColor = common_css.ACCENT_COLOR
-        self.backgroundColor = common_css.FOCUS_MAIN_COLOR
+        self.backgroundColor = common_css.MAIN_COLOR
         self.textColor = common_css.MAIN_TEXT_COLOR
         self.setStyleSheet(self.getStyle())

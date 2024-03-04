@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QSpacerItem
 from PyQt6.QtCore import QTimer
 from ..widgets.item_scroll_view import ItemScrollView
 from ..inputless_combo import InputlessCombo
@@ -57,7 +57,10 @@ class SingleSelectPopup(Popup):
 
         self.items = items
         self.mainLayout.addWidget(self.selection)
-
+        button = ImpPushButton(self)
+        button.setText("Done")
+        button.clicked.connect(lambda: self.close())
+        self.mainLayout.addWidget(button)
         self.setLayout(self.mainLayout)
 
     # Required to allow us to handle on a QT thread
