@@ -47,8 +47,12 @@ class TextOutput(Output):
         self.widget = None
         self.value = value
 
+    def widgetDeath(self):
+        self.widget = None
+
     def getWidget(self):
         self.widget = QLabel()
+        self.widget.destroyed.connect(self.widgetDeath)
         self.widget.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.widget.setStyleSheet("text-align: left")
         self.setValue(self.value)
@@ -66,12 +70,16 @@ class SliderInput(Input):
         self.range = range
         self.value = range[0]
 
+    def widgetDeath(self):
+        self.widget = None
+
     def valueChange(self, value):
         self.value = value
         self.valueChangedFun(value)
 
     def getWidget(self):
         self.widget = QSlider(Qt.Orientation.Horizontal)
+        self.widget.destroyed.connect(self.widgetDeath)
         self.widget.setMinimum(self.range[0])
         self.widget.setMaximum(self.range[1])
         self.widget.setMinimumHeight(25)
@@ -91,8 +99,12 @@ class TextInput(Input):
         self.valueChangedFun = valueChangedFun
         self.styleSheet = styleSheet
 
+    def widgetDeath(self):
+        self.widget = None
+
     def getWidget(self):
         self.widget = QTextEdit()
+        self.widget.destroyed.connect(self.widgetDeath)
         self.widget.setMaximumHeight(self.height)
         self.widget.textChanged.connect(self.valueChanged)
         self.widget.setStyleSheet(self.styleSheet)
