@@ -19,7 +19,7 @@ class SingleSelectPopup(Popup):
         self.instructions = QLabel(self)
         self.name = name
         if len(devices) == 1:
-            self.devices = devices
+            self.devices = list(devices)
         else:
             self.devices = ["All", *devices]
         self.instructions.setText(name)
@@ -116,8 +116,11 @@ class SingleSelectPopup(Popup):
     def popUp(self):
         super().exec()
         dev = []
-        if self.devIndex != 0:
+        if self.devices[self.devIndex] == "All":
+            dev = self.devices[1:]
+        else:
             dev = [self.devices[self.devIndex]]
+
         if self.index is not None:
             return dev, self.items[self.index]
         return dev, None

@@ -17,7 +17,7 @@ class Input():
     def reset(self):
         self.widget = None
 
-    def getWidget(self):
+    def getWidget(self, parent=None):
         return self.widget
 
     def getValue(self):
@@ -36,7 +36,7 @@ class Output():
     def reset(self):
         self.widget = None
 
-    def getWidget(self):
+    def getWidget(self, parent=None):
         return self.widget
 
     def setValue(self, value):
@@ -50,8 +50,8 @@ class TextOutput(Output):
     def widgetDeath(self):
         self.widget = None
 
-    def getWidget(self):
-        self.widget = QLabel()
+    def getWidget(self, parent=None):
+        self.widget = QLabel(parent)
         self.widget.destroyed.connect(self.widgetDeath)
         self.widget.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.widget.setStyleSheet("text-align: left")
@@ -77,8 +77,8 @@ class SliderInput(Input):
         self.value = value
         self.valueChangedFun(value)
 
-    def getWidget(self):
-        self.widget = QSlider(Qt.Orientation.Horizontal)
+    def getWidget(self, parent=None):
+        self.widget = QSlider(Qt.Orientation.Horizontal, parent)
         self.widget.destroyed.connect(self.widgetDeath)
         self.widget.setMinimum(self.range[0])
         self.widget.setMaximum(self.range[1])
@@ -102,8 +102,8 @@ class TextInput(Input):
     def widgetDeath(self):
         self.widget = None
 
-    def getWidget(self):
-        self.widget = QTextEdit()
+    def getWidget(self, parent=None):
+        self.widget = QTextEdit(parent)
         self.widget.destroyed.connect(self.widgetDeath)
         self.widget.setMaximumHeight(self.height)
         self.widget.textChanged.connect(self.valueChanged)
@@ -173,13 +173,11 @@ class BuildAPopup(Popup):
         self.mainLayout = QVBoxLayout(self)
         self.instructions = QLabel(self)
         self.name = name
-        self.devices = devices
+        self.devices = list(devices)
         self.instructions.setText(name)
         self.setWindowTitle(self.name)
         self.setMinimumWidth(800)
-        if len(devices) == 1:
-            self.devices = devices
-        else:
+        if len(devices) != 1:
             self.devices = ["All", *devices]
         self.instructions.setText(name)
 
@@ -201,10 +199,13 @@ class BuildAPopup(Popup):
 
         self.components = components
         first = None
+        tabOrder = []
         for name, item in self.components.items():
             temp = QWidget(self)
             lay = QHBoxLayout()
-            widget = item.getWidget()
+            widget = item.getWidget(self)
+            if issubclass(type(item), Input):
+                tabOrder.append(widget)
             if first is None and issubclass(type(item), Input):
                 first = widget
                 # TODO: We want the first input to be focused automatically
@@ -217,6 +218,10 @@ class BuildAPopup(Popup):
             lay.addWidget(widget)
             temp.setLayout(lay)
             self.mainLayout.addWidget(temp)
+        tabOrder.append(self.devcombo)
+
+        for i in range(1, len(tabOrder)):
+            self.setTabOrder(tabOrder[i-1], tabOrder[i])
 
     def changeType(self, index):
         self.devIndex = index
@@ -231,9 +236,12 @@ class BuildAPopup(Popup):
             self.shouldReturnValue = False
             self.close()
         if msg == "SHIFT_FOCUS":
+            startFocus = self.focusIdx
             self.focusIdx += 1
             if self.focusIdx >= len(self.components):
                 self.focusIdx = 0
+            while issubclass(type(self.components[list(self.components.keys())[self.focusIdx]]), Output) and self.focusIdx != startFocus:
+                self.focusIdx = (self.focusIdx + 1) % len(self.components)
             self.components[list(self.components.keys())[self.focusIdx]].widget.setFocus()
 
     def handleKeyEvent(self, char, event):
@@ -258,9 +266,11 @@ class BuildAPopup(Popup):
 
     def popUp(self):
         super().exec()
-        dev = []
-        if self.devIndex != 0:
+        if self.devices[self.devIndex] == "All":
+            dev = self.devices[1:]
+        else:
             dev = [self.devices[self.devIndex]]
+
         result = self.getResults()
         return dev, result if self.shouldReturnValue else None
 
