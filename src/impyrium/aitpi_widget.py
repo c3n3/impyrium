@@ -69,7 +69,7 @@ class InputControl(QWidget, QObject):
         if self.type == 'button':
             self.inputTrigger = self.inputUnit['trigger']
         elif self.type == 'encoder':
-            self.inputTrigger = f"{self.inputUnit['left_trigger']} <-> {self.inputUnit['right_trigger']}"
+            self.inputTrigger = f"L: {self.inputUnit['left_trigger']}\nR: {self.inputUnit['right_trigger']}"
         else:
             raise Exception("Invalid input unit")
 

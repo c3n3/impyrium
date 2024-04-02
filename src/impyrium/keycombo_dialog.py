@@ -2,6 +2,8 @@ import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QComboBox, QHBoxLayout
 
+from . import common_css
+
 from .aitpi.src.aitpi.pyqt6_key_map import pyqt6Map
 
 from .inputless_combo import InputlessCombo
@@ -10,6 +12,7 @@ class KeyComboDialog(QDialog):
     def __init__(self, doneFun, parent: QWidget = None):
         super().__init__(parent)
         self.doneFun = doneFun
+        self.setStyleSheet(common_css.MAIN_STYLE)
         self.mainLayout = QVBoxLayout(self)
         self.instructions = QLabel(self)
         self.instructions.setText("Record key combo")
