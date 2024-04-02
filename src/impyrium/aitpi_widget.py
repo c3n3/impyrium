@@ -9,6 +9,7 @@ from .aitpi.src.aitpi import router
 from .keycombo_dialog import KeyComboDialog
 from . import control
 
+from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QScrollArea,
@@ -36,6 +37,14 @@ from PyQt6.QtWidgets import (
     QTabWidget,
 )
 
+class ScrollPassCombo(QComboBox):
+    def __init__(self, scrollWidget=None, *args, **kwargs):
+        super(ScrollPassCombo, self).__init__(*args, **kwargs)  
+        self.scrollWidget=scrollWidget
+        # self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, *args, **kwargs):
+        return self.scrollWidget.wheelEvent(*args, **kwargs)
 
 class Selectable(QWidget):
     def __init__(self, title, items, onSelectFun, parent: QWidget = None) -> None:
@@ -50,8 +59,9 @@ class Selectable(QWidget):
         layout.addWidget(combo)
 
 class InputControl(QWidget, QObject):
-    def __init__(self, deleteCallback, inputUnit, parent: QWidget = None):
+    def __init__(self, deleteCallback, inputUnit, scrollWidget, parent: QWidget = None):
         super().__init__(parent)
+        self.scrollWidget = scrollWidget
         self.deleteCallback = deleteCallback
         self.inputUnit = aitpi.InputUnit(inputUnit)
         self.startReglink = self.inputUnit['reg_link']
@@ -68,7 +78,7 @@ class InputControl(QWidget, QObject):
         subLayoutWidget = QWidget()
         layout = QVBoxLayout()
         label = QLabel(self.inputTrigger)
-        self.combo = QComboBox()
+        self.combo = ScrollPassCombo(scrollWidget)
         self.combo.view().setAutoScroll(False)
         self.combo.addItem('<Unset>', '')
         i = 0
@@ -162,7 +172,7 @@ class Aitpi(QWidget):
         for i in self.inputList:
             self.view.removeItem(i)
         inputs = aitpi.getInputs()
-        self.inputList = [InputControl(self.inputControlDelete, x) for x in inputs]
+        self.inputList = [InputControl(self.inputControlDelete, x, self.view) for x in inputs]
         for i in self.inputList:
             self.view.addItem(i)
         self.update()
