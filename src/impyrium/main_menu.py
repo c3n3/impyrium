@@ -101,7 +101,7 @@ def printAllOfType(item, t):
             print(d)
 
 class ControlsScrollView(QWidget):
-    def __init__(self, category, autoReserve):
+    def __init__(self, category, autoReserve, abilities=set()):
         super(ControlsScrollView, self).__init__()
         layout = QVBoxLayout(self)
         self.autoReserve = autoReserve
@@ -118,7 +118,8 @@ class ControlsScrollView(QWidget):
                     continue
                 for item in mod:
                     layout.addWidget(item)
-                    if not c.enabled:
+                    print(c.getRequiredAbilities(), "vs", abilities)
+                    if not c.enabled or (not c.getRequiredAbilities().issubset(abilities) and not autoReserve):
                         item.hide()
                     else:
                         self.count += 1
@@ -166,7 +167,7 @@ class ControlsScrollView(QWidget):
         return None
 
 class ControlsTypeSection(QWidget):
-    def __init__(self, category, autoReserve, parent: QWidget = None):
+    def __init__(self, category, autoReserve, abilities=set(), parent: QWidget = None):
         super().__init__(parent)
         container = QWidget()
         containerLayout = QVBoxLayout()
@@ -179,7 +180,7 @@ class ControlsTypeSection(QWidget):
         subwidget.setStyleSheet('QWidget{ border: 1px solid grey; }')
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(button)
-        self.controlsView = ControlsScrollView(category, autoReserve)
+        self.controlsView = ControlsScrollView(category, autoReserve, abilities)
         self.controlsView.setStyleSheet(f"QWidget{{ border: revert; }}")
         if self.controlsView.count > 0:
             self.showing = True
@@ -392,7 +393,7 @@ class MainWindow(QMainWindow):
         if dev is not None:
             categories = dev.deviceType.getControlCategories()
             for cat in categories:
-                self.selectedDevControls.append(ControlsTypeSection(cat, False))
+                self.selectedDevControls.append(ControlsTypeSection(cat, False, dev.getAbilities()))
             for w in self.selectedDevControls:
                 self.currentControlList.addItem(w)
         self.currentControlList.update()

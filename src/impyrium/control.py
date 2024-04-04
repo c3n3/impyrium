@@ -63,7 +63,7 @@ newDeviceFun_ = None
 signal_ = None
 
 class Control():
-    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True):
+    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True, requiredAbilities=set()):
         self.name = name
         self.sendFun = sendFun
         self.category = category
@@ -72,6 +72,12 @@ class Control():
         self.data = {}
         self.inputType = "button"
         self.enabled = enabled
+        self.requiredAbilities = requiredAbilities
+        if type(self.requiredAbilities) != set:
+            self.requiredAbilities = set(self.requiredAbilities)
+
+    def getRequiredAbilities(self):
+        return self.requiredAbilities
 
     def getValue(self):
         pass
@@ -107,8 +113,8 @@ class ControlFile(Control):
     fileQueue : ThreadSafeQueue = None
     allFiles = "All Files (*)"
 
-    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True, directory=""):
-        super().__init__(category, name, sendFun, deviceAutoReserve, enabled)
+    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True, directory="", requiredAbilities=set()):
+        super().__init__(category, name, sendFun, deviceAutoReserve, enabled, requiredAbilities)
         self.file = ""
         self.dir = directory
 
@@ -146,8 +152,8 @@ class ControlDate(Control):
     pass #TODO:
 
 class ControlSelector(ControlButton):
-    def __init__(self, category, name, sendFun, items, deviceAutoReserve=False, enabled=True):
-        super().__init__(category, name, sendFun, deviceAutoReserve, enabled)
+    def __init__(self, category, name, sendFun, items, deviceAutoReserve=False, enabled=True, requiredAbilities=set()):
+        super().__init__(category, name, sendFun, deviceAutoReserve, enabled, requiredAbilities)
         self.items = items
         self.name = name
         self.sendFun = sendFun
@@ -227,8 +233,8 @@ class ControlBuildAPopup(ControlButton):
             self.requestPopup()
 
 class ControlSlider(Control):
-    def __init__(self, category, name, sendFun, sliderRange : RangeValue, deviceAutoReserve=False) -> None:
-        super().__init__(category, name, sendFun, deviceAutoReserve)
+    def __init__(self, category, name, sendFun, sliderRange : RangeValue, deviceAutoReserve=False, enabled=True, requiredAbilities=set()) -> None:
+        super().__init__(category, name, sendFun, deviceAutoReserve, enabled, requiredAbilities)
         self.range = sliderRange
         self.inputType = "encoder"
 
@@ -265,9 +271,10 @@ class ControlSlider(Control):
 
 # Simple helper class that defines a devices unique id, and stores reservation state
 class Device():
-    def __init__(self, uid, deviceType, name=None):
+    def __init__(self, uid, deviceType, name=None, abilities=set()):
         self.uid = uid
         self.name = name
+        self.abilities = abilities
         if self.name is None:
             self.name = str(self.uid)
         if type(deviceType) == str:
@@ -277,6 +284,18 @@ class Device():
         self.deviceType = deviceType
         self.reserveTask = None
         self.reserveTime = 0.0
+
+    def getAbilities(self):
+        return self.abilities
+
+    def abilitiesSupported(self, abilities):
+        if type(abilities) == set:
+            return abilities.issubset(self.abilities)
+        if type(abilities) == list:
+            for ab in abilities:
+                if ab not in self.abilities:
+                    return False
+            return True
 
     def getName(self):
         return self.name
@@ -340,24 +359,37 @@ class DeviceType():
     def getControlCategories(self):
         return list(self.controlCategories)
 
-    def reserveAllDevices(self, autoReserve=False):
+    def reserveAllDevices(self, autoReserve=False, abilities=set()):
         if not self.canReserve():
             return
         for dev in list(self.devices):
-            self.reserveDevice(dev, autoReserve=autoReserve)
+            if dev.abilitiesSupported(abilities):
+                self.reserveDevice(dev, autoReserve=autoReserve)
 
     def isDevReserved(self, device):
         return device in self.reservedDevices
 
-    def getUnreservedDevices(self):
+    def getUnreservedDevices(self, abilities=set()):
         if self.canReserve():
-            return self.devices.difference(self.reservedDevices)
+            ret = set()
+            devs = self.devices.difference(self.reservedDevices)
+            for dev in devs:
+                if dev.abilitiesSupported(abilities):
+                    ret.add(dev)
+            return ret
         return set()
 
-    def getReservedDevices(self):
+    def getReservedDevices(self, abilities=set()):
+        ret = set()
+        use = None
         if self.canReserve():
-            return self.reservedDevices
-        return self.devices
+            use = self.reservedDevices
+        else:
+            use = self.devices
+        for dev in use:
+            if dev.abilitiesSupported(abilities):
+                ret.add(dev)
+        return ret
 
     def sendUpdateSignal(self):
         AitpiSignal.send(signals.DEVICE_LIST_UPDATE, self.devices)
@@ -409,8 +441,13 @@ class DeviceType():
             if autoReserve:
                 self.scheduleAutoTimeout(device)
 
-    def getAllDevices(self):
-        return self.devices.union(self.reservedDevices)
+    def getAllDevices(self, abilities=set()):
+        devs = self.devices.union(self.reservedDevices)
+        ret = set()
+        for d in devs:
+            if d.abilitiesSupported(abilities):
+                ret.add(d)
+        return ret
 
     @staticmethod
     def getAllDeviceTypes(category):
@@ -426,15 +463,15 @@ class DeviceType():
         devices = set()
         for t in DeviceType.getAllDeviceTypes(ctrl.category):
             if ctrl.deviceAutoReserve and shouldAutoReserve:
-                t.reserveAllDevices(autoReserve=True)
-            devices.update(t.getReservedDevices())
+                t.reserveAllDevices(autoReserve=True, abilities=ctrl.requiredAbilities)
+            devices.update(t.getReservedDevices(ctrl.requiredAbilities))
         return devices
 
     @staticmethod
     def getAllPossibleControlDevList(ctrl):
         devices = set()
         for t in DeviceType.getAllDeviceTypes(ctrl.category):
-            devices.update(t.getAllDevices())
+            devices.update(t.getAllDevices(ctrl.requiredAbilities))
         return devices
 
 def getControls():
