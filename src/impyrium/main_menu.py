@@ -118,7 +118,6 @@ class ControlsScrollView(QWidget):
                     continue
                 for item in mod:
                     layout.addWidget(item)
-                    print(c.getRequiredAbilities(), "vs", abilities)
                     if not c.enabled or (not c.getRequiredAbilities().issubset(abilities) and not autoReserve):
                         item.hide()
                     else:
