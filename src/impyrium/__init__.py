@@ -32,7 +32,7 @@ def init(tempFolder, inputsFile=None, registryFile=None, folderCommands=None):
     default_files.writeFiles(_tempFolder, False)
 
 
-def start():
+def start(logo=None):
     global _inputsFile
     global _registryFile
     global _folderCommands
@@ -58,7 +58,7 @@ def start():
 
     app = main_menu.QApplication(sys.argv)
 
-    window = main_menu.MainWindow()
+    window = main_menu.MainWindow(logo)
     window.show()
     app.exec()
 

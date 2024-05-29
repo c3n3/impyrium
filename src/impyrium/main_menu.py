@@ -321,7 +321,7 @@ class Selectable(QWidget):
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
     ThisisANewThing: typing.ClassVar[pyqtBoundSignal]
-    def __init__(self):
+    def __init__(self, logo):
         super().__init__()
         self.setWindowTitle("Impyrium")
         self.setStyleSheet(common_css.MAIN_STYLE)
@@ -353,7 +353,10 @@ class MainWindow(QMainWindow):
         tabwidget = QTabWidget(self)
         textDisplay = TextDisplay(self)
 
-        self.setWindowIcon(QtGui.QIcon(meta_files.getFile("logo")))
+        if logo is not None:
+            self.setWindowIcon(QtGui.QIcon(logo))
+        else:
+            self.setWindowIcon(QtGui.QIcon(meta_files.getFile("logo")))
 
         tabwidget.addTab(self.currentControlList, "Device")
         tabwidget.addTab(view2, "Global")
