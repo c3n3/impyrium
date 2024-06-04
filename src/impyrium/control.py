@@ -271,15 +271,16 @@ class ControlSlider(Control):
 
 # Simple helper class that defines a devices unique id, and stores reservation state
 class Device():
-    def __init__(self, uid, deviceType, name=None, abilities=set()):
+    def __init__(self, uid, deviceType, name=None, abilities=set(), info={}):
         self.uid = uid
         self.name = name
         self.abilities = abilities
+        self.info = info
         if self.name is None:
             self.name = str(self.uid)
         if type(deviceType) == str:
             deviceType = DeviceType._deviceTypes[deviceType]
-        if type(deviceType) != DeviceType:
+        if not issubclass(type(deviceType), DeviceType):
             raise Exception("deviceType needs to be a DeviceType(), or the name string")
         self.deviceType = deviceType
         self.reserveTask = None
@@ -300,11 +301,17 @@ class Device():
     def getName(self):
         return self.name
 
+    def getFullName(self):
+        return f"{self.getName()} {self.uid}"
+
+    def getInfo(self):
+        return self.info
+
     def __str__(self):
-        return f"<{self.uid}>"
+        return self.getFullName()
 
     def __eq__(self, other):
-        if type(other) != Device:
+        if type(other) != type(self):
             return False
         return self.uid == other.uid
 
@@ -399,7 +406,7 @@ class DeviceType():
         devices = self.detector()
         newDevices = set()
         for device in devices:
-            if type(device) != Device:
+            if not issubclass(type(device), Device):
                 raise Exception("All detected devices need to be Device()")
             newDevices.add(device)
         if (self.devices != newDevices):

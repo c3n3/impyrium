@@ -217,7 +217,7 @@ class DeviceList(QScrollArea):
         if self.selectDeviceFun is not None:
             print("Selecting device")
             if self.selectedDevice != device and device is not None:
-                widget.setStyleSheet("background-color: red")
+                widget.setStyleSheet(f"background-color: {common_css.ACCENT_COLOR}")
                 widget.update()
             else:
                 device = None
@@ -281,7 +281,7 @@ class DeviceList(QScrollArea):
             for dev in unreserved:
                 button = ImpPushButton(self)
                 button.clicked.connect(self.generateReservationHandleFun(dev, devTypes[t]))
-                button.setText(dev.getName())
+                button.setText(dev.getFullName())
                 self.addWidgetToLayout(button)
             reservedLabel = QLabel(self)
             reserved = devTypes[t].getReservedDevices()
