@@ -64,35 +64,3 @@ class TextPopup(Popup):
         if self.index is not None:
             return self.items[self.index]
         return None
-
-if __name__ == '__main__':
-    from ..aitpi_signal import AitpiSignalExecutor
-    class TestApp(QMainWindow):
-        def __init__(self):
-            super().__init__()
-
-            self.setWindowTitle("My App")
-            button = QPushButton("Press me for a dialog!")
-            button.clicked.connect(self.button_clicked)
-            self.setCentralWidget(button)
-            self.executor = AitpiSignalExecutor()
-            self.executor.start()
-
-        def signalTimer(self):
-            AitpiSignal.run()
-
-        def addInput(self, t, item):
-            print(t, item)
-
-        def button_clicked(self, s):
-            dlg = TextPopup(self.addInput, "Something", ["90", "100"], self)
-            dlg.exec()
-
-    app = QApplication(sys.argv)
-
-    aitpi.TerminalKeyInput.startKeyListener()
-
-    window = TestApp()
-    window.show()
-
-    app.exec()

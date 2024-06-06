@@ -24,34 +24,21 @@ from .text_display import TextDisplay
 
 from .widgets.item_scroll_view import ItemScrollView
 
-from .popups.build_a_popup import BuildAPopup
+from .popups import build_a_popup
+from .popups import device_info_popup
 
 from . import common_css
 from .widgets.custom_button import ImpPushButton
 import typing
-
+import PyQt6
 from PyQt6 import QtGui
-from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
+from PyQt6.QtCore import Qt, pyqtBoundSignal
 from PyQt6.QtWidgets import (
     QScrollArea,
-    QFileDialog,
-    QApplication,
-    QCheckBox,
     QComboBox,
-    QDateEdit,
-    QDateTimeEdit,
-    QDial,
-    QDoubleSpinBox,
-    QFontComboBox,
     QLabel,
-    QLCDNumber,
-    QLineEdit,
     QMainWindow,
-    QProgressBar,
-    QRadioButton,
     QSlider,
-    QSpinBox,
-    QTimeEdit,
     QVBoxLayout,
     QWidget,
     QTabWidget,
@@ -81,7 +68,7 @@ def buildPopupConsumer(msg):
     name = msg['name']
     components = msg['components']
     devices = msg['devices']
-    dialog = BuildAPopup(fun, name, devices, components)
+    dialog = build_a_popup.BuildAPopup(fun, name, devices, components)
     devs, res = dialog.popUp()
     fun((devs, res))
 
@@ -265,10 +252,29 @@ class DeviceList(QScrollArea):
                 self.selectDevice(device, widget)
         return fun
 
+    def generateInfoDeviceFun(self, device : control.Device):
+        def fun():
+            info = device.getInfo()
+            popup = device_info_popup.DeviceInfoPopup("Device Info", info, device.getLogo())
+            popup.popUp()
+        return fun
+
     def consume(self, msg):
         self.newDevices(msg)
 
     def newDevices(self, devTypes):
+        def generateInfoButton():
+            infoButton = ImpPushButton(miniWidget)
+            infoButton.setGeometry(50, 50, 50, 50)
+            infoButton.clicked.connect(self.generateInfoDeviceFun(dev))
+            if dev.getLogo() is not None:
+                infoButton.setIcon(QtGui.QIcon(dev.getLogo()))
+                infoButton.setIconSize(PyQt6.QtCore.QSize(35,35))
+            else:
+                infoButton.setText("I")
+                infoButton.setIconSize(PyQt6.QtCore.QSize(35,35))
+            infoButton.setSizePolicy(PyQt6.QtWidgets.QSizePolicy.Policy.Minimum, PyQt6.QtWidgets.QSizePolicy.Policy.Minimum)
+            return infoButton
         # We simply override the argument here
         devTypes = control.DeviceType._deviceTypes
         self.clearWidgets()
@@ -279,10 +285,20 @@ class DeviceList(QScrollArea):
                 detectedLabel.setText(f"{t} detected:")
                 self.addWidgetToLayout(detectedLabel)
             for dev in unreserved:
+                miniWidget = QWidget(self)
+                miniLayout = QHBoxLayout(miniWidget)
+                miniWidget.setLayout(miniLayout)
+
                 button = ImpPushButton(self)
                 button.clicked.connect(self.generateReservationHandleFun(dev, devTypes[t]))
                 button.setText(dev.getFullName())
-                self.addWidgetToLayout(button)
+                button.setSizePolicy(PyQt6.QtWidgets.QSizePolicy.Policy.Expanding, PyQt6.QtWidgets.QSizePolicy.Policy.Minimum)
+
+                miniLayout.addWidget(generateInfoButton(), 1)
+                miniLayout.addWidget(button, 10)
+
+                self.addWidgetToLayout(miniWidget)
+
             reservedLabel = QLabel(self)
             reserved = devTypes[t].getReservedDevices()
             if len(reserved) > 0:
@@ -293,15 +309,18 @@ class DeviceList(QScrollArea):
                 button = ImpPushButton(miniWidget)
                 miniLayout = QHBoxLayout(miniWidget)
                 miniWidget.setLayout(miniLayout)
+                button.setSizePolicy(PyQt6.QtWidgets.QSizePolicy.Policy.Expanding, PyQt6.QtWidgets.QSizePolicy.Policy.Minimum)
 
                 button.clicked.connect(self.generateReleaseHandleFun(dev, devTypes[t], miniWidget))
                 button.setText(dev.getName())
+                miniLayout.addWidget(generateInfoButton())
                 miniLayout.addWidget(button)
 
                 if self.selectDeviceFun is not None:
                     deviceButton = ImpPushButton(miniWidget)
                     deviceButton.clicked.connect(self.generateSelectDeviceFun(dev, miniWidget))
-                    deviceButton.setText("Select")
+                    deviceButton.setText("select")
+                    deviceButton.setSizePolicy(PyQt6.QtWidgets.QSizePolicy.Policy.Expanding, PyQt6.QtWidgets.QSizePolicy.Policy.Minimum)
                     miniLayout.addWidget(deviceButton)
                 self.addWidgetToLayout(miniWidget)
         self.update()
@@ -370,6 +389,7 @@ class MainWindow(QMainWindow):
         # tabwidget.setStyleSheet(f"QWidget{{ background-color: {common_css.MAIN_COLOR} }}")
         tabwidget.setStyleSheet(tabStyle)
         devList = DeviceList(self, self.selectDevice)
+        devList.setMinimumSize(250, 10)
         mainLayout.addWidget(devList)
         mainLayout.addWidget(tabwidget)
         mainLayout.addWidget(textDisplay)

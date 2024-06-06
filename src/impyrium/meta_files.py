@@ -57,7 +57,8 @@ def getScriptPath():
 META_FILES_FOLDER = f"{getScriptPath()}/_meta_files_"
 
 files = {
-    "logo": MetaFile(f"{getScriptPath()}/../../graphics/imperium.jpg", META_FILES_FOLDER)
+    "logo": MetaFile(f"{getScriptPath()}/../../graphics/imperium.jpg", META_FILES_FOLDER),
+    "cancel_button": MetaFile(f"{getScriptPath()}/../../graphics/cancel_button.png", META_FILES_FOLDER)
 }
 
 def generateFiles():

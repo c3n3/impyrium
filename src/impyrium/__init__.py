@@ -5,6 +5,7 @@ from . import device_thread
 from . import main_menu
 from . import default_files
 
+from PyQt6.QtWidgets import QApplication
 from .aitpi.src.aitpi import router
 from .aitpi.src import aitpi
 
@@ -56,7 +57,7 @@ def start(logo=None):
     aitpi.addRegistry(_registryFile, _folderCommands)
     aitpi.initInput(_inputsFile)
 
-    app = main_menu.QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
     window = main_menu.MainWindow(logo)
     window.show()

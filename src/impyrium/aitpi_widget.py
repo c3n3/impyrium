@@ -1,10 +1,15 @@
 import sys
+import PyQt6
 from PyQt6 import QtCore
 from PyQt6.QtCore import pyqtBoundSignal, QTimer, QThread, QEventLoop, pyqtSignal, QObject, pyqtSlot
 import os
 
 from .aitpi.src import aitpi
 from .aitpi.src.aitpi import router
+
+from . import meta_files
+
+from .widgets.custom_button import ImpPushButton
 
 from .keycombo_dialog import KeyComboDialog
 from . import control
@@ -41,7 +46,6 @@ class ScrollPassCombo(QComboBox):
     def __init__(self, scrollWidget=None, *args, **kwargs):
         super(ScrollPassCombo, self).__init__(*args, **kwargs)  
         self.scrollWidget=scrollWidget
-        # self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
     def wheelEvent(self, *args, **kwargs):
         return self.scrollWidget.wheelEvent(*args, **kwargs)
@@ -97,11 +101,11 @@ class InputControl(QWidget, QObject):
         layout.addWidget(self.combo)
         subLayoutWidget.setLayout(layout)
         topLayout.addWidget(subLayoutWidget)
-        delButton = QPushButton()
+        delButton = ImpPushButton()
         delButton.setMaximumWidth(25)
         delButton.setMaximumHeight(25)
-        delButton.setStyleSheet("QPushButton {background-color: darkred; color: smokewhite;}")
-        delButton.setText('X')
+        delButton.setIcon(QtGui.QIcon(meta_files.getFile("cancel_button")))
+        delButton.setIconSize(PyQt6.QtCore.QSize(25,25))
         delButton.clicked.connect(self.deleteClicked)
         topLayout.addWidget(delButton)
 
@@ -199,11 +203,6 @@ if __name__ == "__main__":
     aitpi.addRegistry("test_json/registry.json", "test_json/foldered_commands.json")
     aitpi.initInput("test_json/input.json")
 
-    # aitpi.addInput('<ctrl>+9')
-
-    # aitpi.changeInputRegLink('<ctrl>+9', 'run.py')
-
-    # Subclass QMainWindow to customize your application's main window
     class MainWindow(QMainWindow):
         def __init__(self):
             super().__init__()

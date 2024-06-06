@@ -124,36 +124,3 @@ class SingleSelectPopup(Popup):
         if self.index is not None:
             return dev, self.items[self.index]
         return dev, None
-
-if __name__ == '__main__':
-    class TestApp(QMainWindow):
-        def __init__(self):
-            super().__init__()
-
-            self.setWindowTitle("My App")
-            button = QPushButton("Press me for a dialog!")
-            button.clicked.connect(self.button_clicked)
-            self.setCentralWidget(button)
-            self.timer=QTimer()
-            self.timer.timeout.connect(self.signalTimer)
-            self.timer.setInterval(100)
-            self.timer.start()
-
-        def signalTimer(self):
-            AitpiSignal.run()
-
-        def addInput(self, t, item):
-            print(t, item)
-
-        def button_clicked(self, s):
-            dlg = SingleSelectPopup(self.addInput, "Something", ["one", "two"], ["90", "100"], self)
-            dlg.popUp()
-
-    app = QApplication(sys.argv)
-
-    aitpi.TerminalKeyInput.startKeyListener()
-
-    window = TestApp()
-    window.show()
-
-    app.exec()

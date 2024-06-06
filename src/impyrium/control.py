@@ -11,6 +11,8 @@ from .text_display import TextDisplay
 from . import device_thread
 from enum import Enum
 
+import typing
+
 class ControlEvents(Enum):
     VALUE_SET       = "VALUE_SET"
     BUTTON_PRESS    = "BUTTON_PRESS"
@@ -286,6 +288,9 @@ class Device():
         self.reserveTask = None
         self.reserveTime = 0.0
 
+    def getLogo(self):
+        return None
+
     def getAbilities(self):
         return self.abilities
 
@@ -342,7 +347,7 @@ def removeReserved(device):
 
 # We allow the users to define devices types so that different types of devices can work
 class DeviceType():
-    _deviceTypes = {}
+    _deviceTypes : typing.Dict[str, 'DeviceType'] = {}
 
     def __init__(self, name, controlCategories = [], detector=None, pollRate=1, reserveDeviceFun=None, releaseDeviceFun=None, autoReservationTimeout=None, reserveCheck=None):
         self.name = name
@@ -376,7 +381,7 @@ class DeviceType():
     def isDevReserved(self, device):
         return device in self.reservedDevices
 
-    def getUnreservedDevices(self, abilities=set()):
+    def getUnreservedDevices(self, abilities=set()) -> typing.Set[Device]:
         if self.canReserve():
             ret = set()
             devs = self.devices.difference(self.reservedDevices)
@@ -386,7 +391,7 @@ class DeviceType():
             return ret
         return set()
 
-    def getReservedDevices(self, abilities=set()):
+    def getReservedDevices(self, abilities=set()) -> typing.Set[Device]:
         ret = set()
         use = None
         if self.canReserve():

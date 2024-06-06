@@ -67,7 +67,7 @@ class TextDisplay(QWidget):
 
     def updateText(self):
         text = ""
-        for time, timeString, item in self.msgs:
+        for time, timeString, item in reversed(self.msgs):
             text += f"{timeString} - {item}"
 
         self.label.setText(text)
