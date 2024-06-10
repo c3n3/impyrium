@@ -54,6 +54,7 @@ class TextDisplay(QWidget):
         self.box = QVBoxLayout(self)
         self.box.addWidget(self.label)
         self.setLayout(self.box)
+        self.setMinimumSize(250, 10)
         self.msgs = []
         self.startTime = time.time()
         router.addConsumer(signals.PRINT_TO_TEXT_DISPLAY, self)

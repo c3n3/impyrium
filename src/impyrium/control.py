@@ -11,6 +11,8 @@ from .text_display import TextDisplay
 from . import device_thread
 from enum import Enum
 
+from . import meta_files
+
 import typing
 
 class ControlEvents(Enum):
@@ -289,7 +291,7 @@ class Device():
         self.reserveTime = 0.0
 
     def getLogo(self):
-        return None
+        return meta_files.getFile("default_device_logo")
 
     def getAbilities(self):
         return self.abilities
@@ -412,7 +414,7 @@ class DeviceType():
         newDevices = set()
         for device in devices:
             if not issubclass(type(device), Device):
-                raise Exception("All detected devices need to be Device()")
+                raise Exception(f"All detected devices need to be Device() got '{type(device)}'")
             newDevices.add(device)
         if (self.devices != newDevices):
             self.devices = newDevices
