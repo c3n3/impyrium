@@ -22,7 +22,7 @@ class AitpiSignalExecutor():
     def __init__(self) -> None:
         self.timer=QTimer()
         self.timer.timeout.connect(self.signalTimer)
-        self.timer.setInterval(100)
+        self.timer.setInterval(25)
 
     def start(self):
         self.timer.start()
