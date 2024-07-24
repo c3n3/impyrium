@@ -55,6 +55,7 @@ class TextOutput(Output):
         self.widget.destroyed.connect(self.widgetDeath)
         self.widget.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.widget.setStyleSheet("text-align: left")
+        self.widget.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse);
         self.setValue(self.value)
         return self.widget
 
