@@ -34,7 +34,6 @@ class DeviceInfoPopup(Popup):
         for key, value in info.items():
             text += f"{str(key)}: {str(value)}\n"
         self.instructions.setText(text)
-        print(dir(Qt.TextInteractionFlag))
         self.instructions.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse);
         self.mainLayout.addWidget(self.instructions)
 
