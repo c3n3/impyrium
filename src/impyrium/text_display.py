@@ -32,6 +32,7 @@ class ScrollLabel(QScrollArea):
 
         # creating label
         self.label = QLabel(content)
+        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextSelectableByKeyboard)
 
         # setting alignment to the text
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
