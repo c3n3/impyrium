@@ -11,7 +11,7 @@ from .text_display import TextDisplay
 from . import device_thread
 from enum import Enum
 
-from . import meta_files
+from . import helpers
 
 import typing
 
@@ -291,7 +291,7 @@ class Device():
         self.reserveTime = 0.0
 
     def getLogo(self):
-        return meta_files.getFile("default_device_logo")
+        return helpers.getImageForPyQt("default_device_logo")
 
     def getAbilities(self):
         return self.abilities

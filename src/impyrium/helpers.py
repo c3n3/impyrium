@@ -2,8 +2,10 @@ from .default_files import defaults
 from .default_files.ahk_get_file_script import ahkGetFile
 from . import signals
 from .aitpi_signal import AitpiSignal
-
+from . import images
 from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtGui import QPixmap, QImage
+from PyQt6.QtCore import QByteArray
 
 import os
 
@@ -39,3 +41,18 @@ def addStatusEntry(text):
 
 def removeStatusEntry(text):
     AitpiSignal.send(signals.ADD_SIDEBAR_STATUS_ENTRY, ("REMOVE", text))
+
+def getImageForPyQt(imageCodeName: str):
+    img = images.getFileInBase64(imageCodeName)
+    # ... (assuming you have a QLabel named 'image_label' in your UI)
+
+    # Convert the base64 string back to QByteArray
+    byte_array = QByteArray.fromBase64(img.encode('utf-8'))
+
+    # Load the image from the QByteArray
+    image = QImage()
+    image.loadFromData(byte_array)
+
+    # Create a QPixmap from the QImage
+    pixmap = QPixmap.fromImage(image)
+    return pixmap

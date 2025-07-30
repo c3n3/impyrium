@@ -18,8 +18,6 @@ from . import control
 from .worker_thread import WorkerThread
 import os
 
-from . import meta_files
-
 from .text_display import TextDisplay
 
 from .widgets.item_scroll_view import ItemScrollView
@@ -375,7 +373,7 @@ class MainWindow(QMainWindow):
         if logo is not None:
             self.setWindowIcon(QtGui.QIcon(logo))
         else:
-            self.setWindowIcon(QtGui.QIcon(meta_files.getFile("logo")))
+            self.setWindowIcon(QtGui.QIcon(helpers.getImageForPyQt("logo")))
 
         tabwidget.addTab(self.currentControlList, "Device")
         tabwidget.addTab(view2, "Global")

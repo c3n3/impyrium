@@ -6,13 +6,11 @@ import os
 
 from .aitpi.src import aitpi
 from .aitpi.src.aitpi import router
-
-from . import meta_files
-
 from .widgets.custom_button import ImpPushButton
 
 from .keycombo_dialog import KeyComboDialog
 from . import control
+from . import helpers
 
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
@@ -104,7 +102,7 @@ class InputControl(QWidget, QObject):
         delButton = ImpPushButton()
         delButton.setMaximumWidth(25)
         delButton.setMaximumHeight(25)
-        delButton.setIcon(QtGui.QIcon(meta_files.getFile("cancel_button")))
+        delButton.setIcon(QtGui.QIcon(helpers.getImageForPyQt("cancel_button")))
         delButton.setIconSize(PyQt6.QtCore.QSize(25,25))
         delButton.clicked.connect(self.deleteClicked)
         topLayout.addWidget(delButton)

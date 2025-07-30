@@ -6,6 +6,7 @@ from src.impyrium.worker_thread import WorkerThread
 import os
 import threading
 import typing
+from src.impyrium.thread_safe_queue import ThreadSafeQueue
 
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
