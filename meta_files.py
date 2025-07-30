@@ -64,7 +64,7 @@ files = [
     MetaFile("default_device_logo", f"{getScriptPath()}/graphics/I.png", IMAGES_FILES_FOLDER)
 ]
 
-def generateFiles():
+def generateFiles(metaFolders=metaFolders, files=files):
     print("Generating meta files...")
     for folder in metaFolders:
         if os.path.exists(folder):
