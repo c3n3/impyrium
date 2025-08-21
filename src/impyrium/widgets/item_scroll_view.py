@@ -1,9 +1,9 @@
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QScrollArea,
     QVBoxLayout,
     QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
+from PySide6.QtCore import Qt
 
 class ItemScrollView(QScrollArea):
     def __init__(self, items, parent: QWidget = None) -> None:

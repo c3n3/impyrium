@@ -8,9 +8,9 @@ import threading
 import typing
 from src.impyrium.thread_safe_queue import ThreadSafeQueue
 
-from PyQt6 import QtGui
-from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
-from PyQt6.QtWidgets import (
+from PySide6 import QtGui
+from PySide6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
+from PySide6.QtWidgets import (
     QScrollArea,
     QFileDialog,
     QApplication,

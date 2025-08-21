@@ -1,8 +1,8 @@
 import sys
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QVBoxLayout, QLabel, QWidget
-from PyQt6.QtCore import Qt
-from PyQt6 import QtGui
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QVBoxLayout, QLabel, QWidget
+from PySide6.QtCore import Qt
+from PySide6 import QtGui
 from ..aitpi.src import aitpi
 from ..aitpi_signal import AitpiSignal, AitpiSignalExecutor
 from .popup import Popup

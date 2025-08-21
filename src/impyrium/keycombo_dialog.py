@@ -1,6 +1,6 @@
 import sys
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QComboBox, QHBoxLayout
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QComboBox, QHBoxLayout
 
 from . import common_css
 
@@ -77,14 +77,14 @@ class KeyComboDialog(QDialog):
         return ("".join(keylist))[:-1]
 
     def keyPressEvent(self, event):
-        self.pressed.add(pyqt6Map[event.key()])
-        self.keysList[self.keysIndex].add(pyqt6Map[event.key()])
+        self.pressed.add(PySide6Map[event.key()])
+        self.keysList[self.keysIndex].add(PySide6Map[event.key()])
         self.results[self.keysIndex].setText(self.getString(self.keysIndex))
         self.update()
 
     def keyReleaseEvent(self, event):
-        if pyqt6Map[event.key()] in self.pressed:
-            self.pressed.remove(pyqt6Map[event.key()])
+        if PySide6Map[event.key()] in self.pressed:
+            self.pressed.remove(PySide6Map[event.key()])
         if len(self.keysList[self.keysIndex]) == 0:
             return
         if len(self.pressed) == 0 and self.type == 'button':

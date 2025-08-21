@@ -3,9 +3,9 @@ from .default_files.ahk_get_file_script import ahkGetFile
 from . import signals
 from .aitpi_signal import AitpiSignal
 from . import images
-from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtGui import QPixmap, QImage
-from PyQt6.QtCore import QByteArray
+from PySide6.QtWidgets import QFileDialog
+from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtCore import QByteArray
 
 import os
 

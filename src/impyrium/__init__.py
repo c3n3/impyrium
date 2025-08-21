@@ -5,7 +5,7 @@ from . import device_thread
 from . import main_menu
 from . import default_files
 
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from .aitpi.src.aitpi import router
 from .aitpi.src import aitpi
 

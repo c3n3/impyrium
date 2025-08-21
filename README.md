@@ -6,7 +6,7 @@ and integrating everything into keyboard shortcuts
 ```
 pip3 install watchdog
 pip3 install pynput
-pip3 install pyqt6
+pip3 install PySide6
 ```
 
 ### Setting up a project

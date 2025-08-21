@@ -1,6 +1,6 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QSpacerItem
-from PyQt6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QSpacerItem
+from PySide6.QtCore import QTimer
 from ..widgets.item_scroll_view import ItemScrollView
 from ..inputless_combo import InputlessCombo
 from ..aitpi.src import aitpi

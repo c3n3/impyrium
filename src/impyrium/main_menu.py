@@ -28,10 +28,10 @@ from .popups import device_info_popup
 from . import common_css
 from .widgets.custom_button import ImpPushButton
 import typing
-import PyQt6
-from PyQt6 import QtGui
-from PyQt6.QtCore import Qt, pyqtBoundSignal
-from PyQt6.QtWidgets import (
+import PySide6
+from PySide6 import QtGui
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QScrollArea,
     QComboBox,
     QLabel,
@@ -267,11 +267,11 @@ class DeviceList(QScrollArea):
             infoButton.clicked.connect(self.generateInfoDeviceFun(dev))
             if dev.getLogo() is not None:
                 infoButton.setIcon(QtGui.QIcon(dev.getLogo()))
-                infoButton.setIconSize(PyQt6.QtCore.QSize(35,35))
+                infoButton.setIconSize(PySide6.QtCore.QSize(35,35))
             else:
                 infoButton.setText("I")
-                infoButton.setIconSize(PyQt6.QtCore.QSize(35,35))
-            infoButton.setSizePolicy(PyQt6.QtWidgets.QSizePolicy.Policy.Minimum, PyQt6.QtWidgets.QSizePolicy.Policy.Minimum)
+                infoButton.setIconSize(PySide6.QtCore.QSize(35,35))
+            infoButton.setSizePolicy(PySide6.QtWidgets.QSizePolicy.Policy.Minimum, PySide6.QtWidgets.QSizePolicy.Policy.Minimum)
             return infoButton
         # We simply override the argument here
         devTypes = control.DeviceType._deviceTypes
@@ -290,7 +290,7 @@ class DeviceList(QScrollArea):
                 button = ImpPushButton(self)
                 button.clicked.connect(self.generateReservationHandleFun(dev, devTypes[t]))
                 button.setText(dev.getFullName())
-                button.setSizePolicy(PyQt6.QtWidgets.QSizePolicy.Policy.Expanding, PyQt6.QtWidgets.QSizePolicy.Policy.Minimum)
+                button.setSizePolicy(PySide6.QtWidgets.QSizePolicy.Policy.Expanding, PySide6.QtWidgets.QSizePolicy.Policy.Minimum)
 
                 miniLayout.addWidget(generateInfoButton(), 1)
                 miniLayout.addWidget(button, 10)
@@ -307,7 +307,7 @@ class DeviceList(QScrollArea):
                 button = ImpPushButton(miniWidget)
                 miniLayout = QHBoxLayout(miniWidget)
                 miniWidget.setLayout(miniLayout)
-                button.setSizePolicy(PyQt6.QtWidgets.QSizePolicy.Policy.Expanding, PyQt6.QtWidgets.QSizePolicy.Policy.Minimum)
+                button.setSizePolicy(PySide6.QtWidgets.QSizePolicy.Policy.Expanding, PySide6.QtWidgets.QSizePolicy.Policy.Minimum)
 
                 button.clicked.connect(self.generateReleaseHandleFun(dev, devTypes[t], miniWidget))
                 button.setText(dev.getName())
@@ -318,7 +318,7 @@ class DeviceList(QScrollArea):
                     deviceButton = ImpPushButton(miniWidget)
                     deviceButton.clicked.connect(self.generateSelectDeviceFun(dev, miniWidget))
                     deviceButton.setText("select")
-                    deviceButton.setSizePolicy(PyQt6.QtWidgets.QSizePolicy.Policy.Expanding, PyQt6.QtWidgets.QSizePolicy.Policy.Minimum)
+                    deviceButton.setSizePolicy(PySide6.QtWidgets.QSizePolicy.Policy.Expanding, PySide6.QtWidgets.QSizePolicy.Policy.Minimum)
                     miniLayout.addWidget(deviceButton)
                 self.addWidgetToLayout(miniWidget)
         self.update()
@@ -337,7 +337,6 @@ class Selectable(QWidget):
 
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
-    ThisisANewThing: typing.ClassVar[pyqtBoundSignal]
     def __init__(self, logo, title):
         super().__init__()
         if title is None:
@@ -423,11 +422,11 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, event):
         if self.isLinux:
-            aitpi.pyqt6KeyPressEvent(event)
+            aitpi.PySide6KeyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         if self.isLinux:
-            aitpi.pyqt6KeyReleaseEvent(event)
+            aitpi.PySide6KeyReleaseEvent(event)
 
     def closeEvent(self, event):
         self.end()

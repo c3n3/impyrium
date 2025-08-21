@@ -1,7 +1,7 @@
 import sys
-import PyQt6
-from PyQt6 import QtCore
-from PyQt6.QtCore import pyqtBoundSignal, QTimer, QThread, QEventLoop, pyqtSignal, QObject, pyqtSlot
+import PySide6
+from PySide6 import QtCore
+from PySide6.QtCore import QObject
 import os
 
 from .aitpi.src import aitpi
@@ -12,9 +12,9 @@ from .keycombo_dialog import KeyComboDialog
 from . import control
 from . import helpers
 
-from PyQt6 import QtGui
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6 import QtGui
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QScrollArea,
     QApplication,
     QCheckBox,
@@ -103,7 +103,7 @@ class InputControl(QWidget, QObject):
         delButton.setMaximumWidth(25)
         delButton.setMaximumHeight(25)
         delButton.setIcon(QtGui.QIcon(helpers.getImageForPyQt("cancel_button")))
-        delButton.setIconSize(PyQt6.QtCore.QSize(25,25))
+        delButton.setIconSize(PySide6.QtCore.QSize(25,25))
         delButton.clicked.connect(self.deleteClicked)
         topLayout.addWidget(delButton)
 
@@ -212,11 +212,11 @@ if __name__ == "__main__":
 
         def keyPressEvent(self, event):
             if self.isLinux:
-                aitpi.pyqt6KeyPressEvent(event)
+                aitpi.PySide6KeyPressEvent(event)
 
         def keyReleaseEvent(self, event):
             if self.isLinux:
-                aitpi.pyqt6KeyReleaseEvent(event)
+                aitpi.PySide6KeyReleaseEvent(event)
 
     app = QApplication(sys.argv)
     window = MainWindow()

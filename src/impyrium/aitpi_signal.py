@@ -1,7 +1,7 @@
 from .aitpi.src.aitpi import router
 from .thread_safe_queue import ThreadSafeQueue
 
-from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
+from PySide6.QtCore import QTimer
 
 class AitpiSignal():
     queue = ThreadSafeQueue()

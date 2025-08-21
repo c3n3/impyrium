@@ -2,8 +2,8 @@ from .aitpi_signal import AitpiSignal
 from . import signals
 from .aitpi.src.aitpi import router
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
     QWidget,

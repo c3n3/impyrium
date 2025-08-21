@@ -1,12 +1,9 @@
 import sys
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QWidget, QVBoxLayout, QLabel, QComboBox, QHBoxLayout
-from PyQt6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
-from ..widgets.item_scroll_view import ItemScrollView
-from ..inputless_combo import InputlessCombo
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QWidget
+from PySide6.QtCore import Qt, QTimer
 from ..aitpi.src import aitpi
 from ..aitpi_signal import AitpiSignal, AitpiSignalExecutor
-import pynput
 
 class Popup(QDialog):
     popupCount = 0

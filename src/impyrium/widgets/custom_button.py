@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QPushButton, QWidget
+from PySide6.QtWidgets import QPushButton, QWidget
 from .. import common_css
 
 class ImpPushButton(QPushButton):

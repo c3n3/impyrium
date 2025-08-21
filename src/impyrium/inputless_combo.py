@@ -1,5 +1,5 @@
-from PyQt6.QtCore import QEvent, QObject
-from PyQt6.QtWidgets import QWidget, QComboBox
+from PySide6.QtCore import QEvent, QObject
+from PySide6.QtWidgets import QWidget, QComboBox
 
 
 class InputlessCombo(QComboBox):
