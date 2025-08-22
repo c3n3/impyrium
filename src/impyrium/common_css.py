@@ -8,3 +8,9 @@ FOCUS_TEXT_COLOR = "#F5E5C9"
 MAIN_STYLE = f"""
 QWidget {{ background-color: {MAIN_COLOR}; color: {MAIN_TEXT_COLOR} }}
 """
+TAB_STYLE = f"""
+QTabBar::tab:selected {{background-color: {ACCENT_COLOR}; }}
+QTabBar::tab {{background-color: {MAIN_COLOR}; }}
+QTabWidget>QWidget>QWidget{{ background: gray; }}
+QTabWidget::pane {{ border-top: 2px solid {ACCENT_COLOR}; }}
+"""

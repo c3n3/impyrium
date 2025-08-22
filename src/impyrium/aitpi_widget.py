@@ -48,18 +48,6 @@ class ScrollPassCombo(QComboBox):
     def wheelEvent(self, *args, **kwargs):
         return self.scrollWidget.wheelEvent(*args, **kwargs)
 
-class Selectable(QWidget):
-    def __init__(self, title, items, onSelectFun, parent: QWidget = None) -> None:
-        super().__init__(parent)
-        layout = QVBoxLayout(self)
-        label = QLabel(title)
-        combo = QComboBox()
-        combo.addItems(items)
-        label.setBuddy(combo)
-        combo.currentIndexChanged.connect(onSelectFun)
-        layout.addWidget(label)
-        layout.addWidget(combo)
-
 class InputControl(QWidget, QObject):
     def __init__(self, deleteCallback, inputUnit, scrollWidget, parent: QWidget = None):
         super().__init__(parent)
@@ -212,11 +200,11 @@ if __name__ == "__main__":
 
         def keyPressEvent(self, event):
             if self.isLinux:
-                aitpi.PySide6KeyPressEvent(event)
+                aitpi.pyqt6KeyPressEvent(event)
 
         def keyReleaseEvent(self, event):
             if self.isLinux:
-                aitpi.PySide6KeyReleaseEvent(event)
+                aitpi.pyqt6KeyPressEvent(event)
 
     app = QApplication(sys.argv)
     window = MainWindow()

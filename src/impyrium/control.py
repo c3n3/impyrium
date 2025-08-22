@@ -11,6 +11,8 @@ from .text_display import TextDisplay
 from . import device_thread
 from enum import Enum
 
+from typing import Dict, List
+
 from . import helpers
 
 import typing
@@ -62,7 +64,7 @@ class RangeValue():
     def getValue(self):
         return self.value
 
-controls_ = {}
+controls_: Dict[str, List["Control"]] = {}
 newDeviceFun_ = None
 signal_ = None
 
@@ -488,7 +490,7 @@ class DeviceType():
             devices.update(t.getAllDevices(ctrl.requiredAbilities))
         return devices
 
-def getControls():
+def getControls() -> Dict[str, List[Control]]:
     global controls_
     return controls_
 
@@ -500,7 +502,7 @@ def addToAitpi(control):
     aitpi.addCommandToRegistry(None, control.name, control.category, control.inputType)
     router.addConsumer([control.category], control)
 
-def registerControl(control):
+def registerControl(control: Control):
     global controls_
     if (control.category not in controls_):
         controls_[control.category] = []
