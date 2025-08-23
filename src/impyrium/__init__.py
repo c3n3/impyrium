@@ -10,6 +10,8 @@ from .aitpi.src.aitpi import router
 from .aitpi.src import aitpi
 from .main_menu import MainWindow
 from . import main_menu
+from . import worker_thread
+
 
 import os
 import json
@@ -66,6 +68,9 @@ def start(logo=None, title=None, superWindow: QWidget = None):
 
     window.show()
     _app.exec()
+    device_thread.stop()
+    for thread in worker_thread.WorkerThread._allWorkers:
+        thread.stop()
 
 def getTempFolder():
     global _tempFolder

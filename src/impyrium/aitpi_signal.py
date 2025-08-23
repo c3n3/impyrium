@@ -1,10 +1,14 @@
 from .aitpi.src.aitpi import router
 from .thread_safe_queue import ThreadSafeQueue
-
+from typing import Callable
 from PySide6.QtCore import QTimer
 
 class AitpiSignal():
     queue = ThreadSafeQueue()
+
+    @staticmethod
+    def schedule(fun: Callable):
+        AitpiSignal.queue.put(fun)
 
     @staticmethod
     def send(id, data):
@@ -14,8 +18,11 @@ class AitpiSignal():
     def run():
         item = AitpiSignal.queue.pop()
         if item is not None:
-            id, data = item
-            router.send(id, data)
+            if isinstance(item, Callable):
+                item()
+            else:
+                id, data = item
+                router.send(id, data)
 
 
 class AitpiSignalExecutor():
