@@ -7,6 +7,7 @@ from .aitpi.src.aitpi import router
 from .aitpi.src import aitpi
 
 from .aitpi_signal import AitpiSignalExecutor
+from typing import Tuple
 
 from . import helpers
 from .aitpi_signal import AitpiSignal
@@ -84,6 +85,10 @@ def init():
     router.addConsumer([signals.CUSTOM_POPUP], buildPopupConsumer)
 
 class SuperWindow(QWidget):
+    def __init__(self, minsize: Tuple[int, int] = None):
+        super().__init__()
+        self.minsize = minsize
+
     def setMainImpyrium(self, mainImpyrium: MainImpyrium):
         raise NotImplementedError("This method should be implemented in the subclass")
 
@@ -96,7 +101,10 @@ class MainWindow(QMainWindow):
         else:
             self.setWindowTitle(title)
         self.setStyleSheet(common_css.MAIN_STYLE)
-        self.setMinimumSize(800, 500)
+        if superWindow.minsize is not None:
+            self.setMinimumSize(*superWindow.minsize)
+        else:
+            self.setMinimumSize(800, 500)
         self.fileCallback = None
         self.selectedDevice = None
         self.signalExec = AitpiSignalExecutor()
