@@ -277,11 +277,13 @@ class ControlSlider(Control):
 
 # Simple helper class that defines a devices unique id, and stores reservation state
 class Device():
-    def __init__(self, uid, deviceType, name=None, abilities=set(), info={}):
+    def __init__(self, uid, deviceType, name=None, abilities=set(), info={}, reserveTooltip="", unreservedTooltip=""):
         self.uid = uid
         self.name = name
         self.abilities = abilities
         self.info = info
+        self.reserveTooltip = reserveTooltip
+        self.unreservedTooltip = unreservedTooltip
         if self.name is None:
             self.name = str(self.uid)
         if type(deviceType) == str:
@@ -315,6 +317,12 @@ class Device():
 
     def getInfo(self):
         return self.info
+
+    def getReservedTooltip(self):
+        return self.reserveTooltip
+
+    def getUnreservedTooltip(self):
+        return self.unreservedTooltip
 
     def __str__(self):
         return self.getFullName()
@@ -457,7 +465,7 @@ class DeviceType():
             if autoReserve:
                 self.scheduleAutoTimeout(device)
 
-    def getAllDevices(self, abilities=set()):
+    def getAllDevices(self, abilities=set()) -> typing.Set[Device]:
         devs = self.devices.union(self.reservedDevices)
         ret = set()
         for d in devs:
@@ -489,6 +497,12 @@ class DeviceType():
         for t in DeviceType.getAllDeviceTypes(ctrl.category):
             devices.update(t.getAllDevices(ctrl.requiredAbilities))
         return devices
+
+    @staticmethod
+    def getDeviceType(name) -> "DeviceType":
+        if name in DeviceType._deviceTypes:
+            return DeviceType._deviceTypes[name]
+        return None
 
 def getControls() -> Dict[str, List[Control]]:
     global controls_
