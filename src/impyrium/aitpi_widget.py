@@ -42,7 +42,7 @@ from PySide6.QtWidgets import (
 
 class ScrollPassCombo(QComboBox):
     def __init__(self, scrollWidget=None, *args, **kwargs):
-        super(ScrollPassCombo, self).__init__(*args, **kwargs)  
+        super(ScrollPassCombo, self).__init__(*args, **kwargs)
         self.scrollWidget=scrollWidget
 
     def wheelEvent(self, *args, **kwargs):

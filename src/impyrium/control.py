@@ -43,7 +43,7 @@ class RangeValue():
 
         res = (value - self.min) / self.inc
         if (float(int(res)) != res):
-            value = self.min + int(res) * self.inc 
+            value = self.min + int(res) * self.inc
         return value
 
     def sub(self):

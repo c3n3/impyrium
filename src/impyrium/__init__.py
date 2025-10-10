@@ -20,8 +20,6 @@ _tempFolder = None
 _inputsFile = None
 _registryFile = None
 _folderCommands = None
-_app = QApplication(sys.argv)
-
 
 def init(tempFolder, inputsFile=None, registryFile=None, folderCommands=None):
     global _tempFolder
@@ -39,11 +37,10 @@ def init(tempFolder, inputsFile=None, registryFile=None, folderCommands=None):
     default_files.writeFiles(_tempFolder, False)
     main_menu.init()
 
-def start(logo=None, title=None, superWindow: QWidget = None):
+def start():
     global _inputsFile
     global _registryFile
     global _folderCommands
-    global _app
 
     defaultInputsFile = f"{_tempFolder}/inputs.json"
     if _inputsFile is None:
@@ -64,10 +61,7 @@ def start(logo=None, title=None, superWindow: QWidget = None):
     aitpi.addRegistry(_registryFile, _folderCommands)
     aitpi.initInput(_inputsFile)
 
-    window = main_menu.MainWindow(logo, title, superWindow)
-
-    window.show()
-    _app.exec()
+def stop():
     device_thread.stop()
     for thread in worker_thread.WorkerThread._allWorkers:
         thread.stop()

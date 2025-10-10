@@ -41,4 +41,3 @@ def start():
     if worker_ == None:
         worker_ = DeviceThread()
     worker_.start()
-

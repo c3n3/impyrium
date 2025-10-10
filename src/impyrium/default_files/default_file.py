@@ -27,4 +27,3 @@ class DefaultFile():
 
     def exists(self):
         return os.path.exists(self.getPath())
-

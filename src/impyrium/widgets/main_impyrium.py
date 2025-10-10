@@ -63,16 +63,7 @@ class DeviceList(QScrollArea):
 
     def addWidgetToLayout(self, widget):
         self.box.addWidget(widget)
-        self.widgetList.append(widget)
-
-    def clearWidgets(self):
-        for w in self.widgetList:
-            w.setStyleSheet("")
-            for child in w.children():
-                w.setStyleSheet("")
-                child.deleteLater()
-            self.box.removeWidget(w)
-        self.widgetList.clear()
+        # self.widgetList.append(widget)
 
     def removeWidget(self, w):
         self.box.removeWidget(w)
@@ -134,7 +125,11 @@ class DeviceList(QScrollArea):
             return infoButton
         # We simply override the argument here
         devTypes = control.DeviceType._deviceTypes
-        self.clearWidgets()
+        # Clear all widgets from the box layout
+        while self.box.count():
+            child = self.box.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
         for t in devTypes.keys():
             unreservedTemp = devTypes[t].getUnreservedDevices()
             unreserved = []
@@ -164,7 +159,6 @@ class DeviceList(QScrollArea):
 
                 self.addWidgetToLayout(miniWidget)
 
-            reservedLabel = QLabel(self)
             reservedTemp = devTypes[t].getReservedDevices()
             reserved = []
             for dev in reservedTemp:
@@ -173,6 +167,7 @@ class DeviceList(QScrollArea):
                 reserved.append(dev)
 
             if len(reserved) > 0:
+                reservedLabel = QLabel(self)
                 reservedLabel.setText(f"{t} reserved:")
                 self.addWidgetToLayout(reservedLabel)
             for dev in reserved:
@@ -223,6 +218,7 @@ class MainImpyrium(QWidget):
 
         tabwidget.addTab(self.currentControlList, "Device")
         tabwidget.addTab(view2, "Global")
+        tabwidget.setCurrentIndex(1)
         tabwidget.addTab(Aitpi(self), "Keys")
 
         tabwidget.setStyleSheet(common_css.TAB_STYLE)
