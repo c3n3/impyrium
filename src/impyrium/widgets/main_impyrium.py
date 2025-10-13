@@ -5,7 +5,8 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QVBoxLayout,
     QLabel,
-    QSizePolicy
+    QSizePolicy,
+    QDockWidget,
 )
 from .item_scroll_view import ItemScrollView
 from .custom_button import ImpPushButton
@@ -151,7 +152,7 @@ class DeviceList(QScrollArea):
 
                 button = ImpPushButton(self)
                 button.clicked.connect(self.generateReservationHandleFun(dev, devTypes[t]))
-                button.setText(dev.getFullName())
+                button.setText(f"Reserve\n{dev.getFullName()}")
                 button.setSizePolicy(PySide6.QtWidgets.QSizePolicy.Policy.Expanding, PySide6.QtWidgets.QSizePolicy.Policy.Minimum)
 
                 miniLayout.addWidget(generateInfoButton(), 1)
@@ -178,7 +179,7 @@ class DeviceList(QScrollArea):
                 button.setSizePolicy(PySide6.QtWidgets.QSizePolicy.Policy.Expanding, PySide6.QtWidgets.QSizePolicy.Policy.Minimum)
 
                 button.clicked.connect(self.generateReleaseHandleFun(dev, devTypes[t], miniWidget))
-                button.setText(dev.getName())
+                button.setText(f"Release\n{dev.getName()}")
                 miniLayout.addWidget(generateInfoButton())
                 miniLayout.addWidget(button)
 
@@ -186,11 +187,19 @@ class DeviceList(QScrollArea):
                     deviceButton = ImpPushButton(miniWidget)
                     self.addSelectDeviceFun(dev, miniWidget)
                     deviceButton.clicked.connect(DeviceList.generateSelectDeviceFun(dev))
-                    deviceButton.setText("select")
+                    deviceButton.setText("Select")
                     deviceButton.setSizePolicy(PySide6.QtWidgets.QSizePolicy.Policy.Expanding, PySide6.QtWidgets.QSizePolicy.Policy.Minimum)
                     miniLayout.addWidget(deviceButton)
                 self.addWidgetToLayout(miniWidget)
         self.update()
+
+
+class DeviceListDock(QDockWidget):
+    def __init__(self, parent=None, selectDeviceCallback=None):
+        super().__init__("Device List", parent)
+        self.selectDeviceCallback = selectDeviceCallback
+        self.deviceList = DeviceList(self, selectDeviceCallback)
+        self.setWidget(self.deviceList)
 
 
 class MainImpyrium(QWidget):
@@ -206,24 +215,20 @@ class MainImpyrium(QWidget):
         mainLayout = QHBoxLayout()
         tabwidget = QTabWidget(self)
         textDisplay = TextDisplay(self)
-        devList = DeviceList(self, self.selectDevice)
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        devList.setFixedWidth(250)
 
-        devList.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         tabwidget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         textDisplay.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        tabwidget.addTab(self.currentControlList, "Device")
+        tabwidget.addTab(self.currentControlList, "Single Device")
         tabwidget.addTab(view2, "Global")
         tabwidget.setCurrentIndex(1)
-        tabwidget.addTab(Aitpi(self), "Keys")
+        tabwidget.addTab(Aitpi(self), "Keyboard Shortcuts")
 
         tabwidget.setStyleSheet(common_css.TAB_STYLE)
 
-        mainLayout.addWidget(devList)
         mainLayout.addWidget(tabwidget)
         mainLayout.addWidget(textDisplay)
         self.setLayout(mainLayout)
