@@ -56,3 +56,8 @@ def getImageForPyQt(imageCodeName: str):
     # Create a QPixmap from the QImage
     pixmap = QPixmap.fromImage(image)
     return pixmap
+
+def isWayland():
+    if os.name != 'posix':
+        return False
+    return os.environ.get('XDG_SESSION_TYPE') == 'wayland'

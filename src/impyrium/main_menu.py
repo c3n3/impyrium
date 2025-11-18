@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         else:
             self.setWindowTitle(title)
         self.setStyleSheet(common_css.MAIN_STYLE)
-        if superWindow.minsize is not None:
+        if superWindow is not None and superWindow.minsize is not None:
             self.setMinimumSize(*superWindow.minsize)
         else:
             self.setMinimumSize(800, 500)

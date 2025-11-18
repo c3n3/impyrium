@@ -60,6 +60,7 @@ def start():
 
     aitpi.addRegistry(_registryFile, _folderCommands)
     aitpi.initInput(_inputsFile)
+    aitpi.TerminalKeyInput.startKeyListener()
 
 def stop():
     device_thread.stop()

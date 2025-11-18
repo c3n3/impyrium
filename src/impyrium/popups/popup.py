@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QDialog, QWidget
 from PySide6.QtCore import Qt, QTimer
 from ..aitpi.src import aitpi
 from ..aitpi_signal import AitpiSignal, AitpiSignalExecutor
+from .. import helpers
 
 class Popup(QDialog):
     popupCount = 0
@@ -28,13 +29,15 @@ class Popup(QDialog):
         QTimer.singleShot(1,self.focusAndShowWindow)
 
     def focusAndShowWindow(self):
+        self.setMinimumWidth(100)
         if self.windowState() != Qt.WindowState.WindowMaximized:
-            self.showMaximized()
+            if not helpers.isWayland():
+                self.showMaximized()
             self.showNormal()
         else:
             self.showNormal()
-            self.showMaximized()
-
+            if not helpers.isWayland():
+                self.showMaximized()
         self.raise_()
         self.activateWindow()
 

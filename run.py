@@ -9,6 +9,8 @@ import os
 from src.impyrium.main_menu import SuperWindow
 from PySide6.QtWidgets import QApplication, QWidget, QTabWidget, QVBoxLayout, QLabel, QLineEdit, QTextEdit, QHBoxLayout
 from src.impyrium import common_css
+from src.impyrium import main_menu
+from src.impyrium.widgets import main_impyrium
 
 TerminalKeyInput.shouldSpawnThreads(True)
 # TerminalKeyInput.setDebug(True)
@@ -141,7 +143,14 @@ class MainWindow(SuperWindow):
         self.setLayout(self.layoutWidget)
         self.layoutWidget.addWidget(self.tabs)
 
+import sys
+
+app = QApplication(sys.argv)
+
+impyrium.start()
 main_window = MainWindow()
-impyrium.start(superWindow=main_window)
+main_men = main_menu.MainWindow(logo=None, title="Impyrium Test", superWindow=main_window)
+main_men.show()
+app.exec()
 
 aitpi.shutdown()
