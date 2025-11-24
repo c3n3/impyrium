@@ -1,20 +1,19 @@
+import py_global_shortcuts as pygs
+
+PYGS_APPNAME = "impyrium_app"
+
+if __name__ == "__main__":
+    pygs.binding_handle(PYGS_APPNAME)
+
 import time
 from src import impyrium
-from src.impyrium.aitpi.src import aitpi
-from src.impyrium.aitpi.src.aitpi.message import InputCommand
 from src.impyrium.widgets.main_impyrium import DeviceList
 from src.impyrium import control
-from src.impyrium.aitpi.src.aitpi.input_initializer import TerminalKeyInput
-import os
 from src.impyrium.main_menu import SuperWindow
 from PySide6.QtWidgets import QApplication, QWidget, QTabWidget, QVBoxLayout, QLabel, QLineEdit, QTextEdit, QHBoxLayout
 from src.impyrium import common_css
 from src.impyrium import main_menu
 from src.impyrium.widgets import main_impyrium
-
-TerminalKeyInput.shouldSpawnThreads(True)
-# TerminalKeyInput.setDebug(True)
-
 
 def detect():
     return [control.Device(0, "Usb device")]
@@ -32,12 +31,12 @@ def otherDevices():
         ret.append(control.Device(f"{i} Other", "Other device"))
     return ret
 
-    
-impyrium.init("./test_json/inputs.json", "./test_json/registry.json", "./test_json/folder_commands.json")
+
+impyrium.init("./temp", "./test_json/registry.json", "./test_json/folder_commands.json")
 
 # Add all controls and devices
 
-def doSomething(ctrl, event, devlist):
+def doSomething(ctrl: control.Control, event, devlist: list[control.Device]):
     print("Got", ctrl.name, "with", event, devlist)
 
 control.registerControl(control.ControlButton("Category1", "Control1", doSomething))
@@ -67,14 +66,6 @@ otherDevs = control.DeviceType(
 
 control.registerDeviceType(usbDevices)
 control.registerDeviceType(otherDevs)
-
-def run_py(message: InputCommand, event, devList):
-    if (message.event == aitpi.BUTTON_PRESS and message.attributes['id'] == 'python_commands'):
-        os.system(f"python3 {message.attributes['path']}/{message.attributes['name']}")
-    elif (message.event in aitpi.ENCODER_VALUES and message.attributes['id'] == 'python_encoders'):
-        os.system(f"python3 {message.attributes['path']}/{message.attributes['name']} {message.event}")
-
-aitpi.router.addConsumer(['python_commands', 'python_encoders'], run_py)
 
 def filterDev(dev: control.Device):
     # Filter out devices that are not of type "Usb device"
@@ -147,10 +138,11 @@ import sys
 
 app = QApplication(sys.argv)
 
-impyrium.start()
-main_window = MainWindow()
-main_men = main_menu.MainWindow(logo=None, title="Impyrium Test", superWindow=main_window)
-main_men.show()
-app.exec()
-
-aitpi.shutdown()
+try:
+    impyrium.start()
+    main_window = MainWindow()
+    main_men = main_menu.MainWindow(logo=None, title="Impyrium Test", superWindow=main_window)
+    main_men.show()
+    app.exec()
+finally:
+    pygs.deinit()

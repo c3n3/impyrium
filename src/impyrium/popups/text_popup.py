@@ -4,8 +4,6 @@ from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, Q
 from PySide6.QtCore import Qt, pyqtBoundSignal, pyqtSignal, pyqtSlot, QTimer
 from ..widgets.item_scroll_view import ItemScrollView
 from ..inputless_combo import InputlessCombo
-from ..aitpi.src import aitpi
-from ..aitpi_signal import AitpiSignal, AitpiSignalExecutor
 import pynput
 from .popup import Popup
 
@@ -46,15 +44,10 @@ class TextPopup(Popup):
         self.value = self.text.toPlainText()
         print(self.text)
 
-    # Required to allow us to handle on a QT thread
-    def consume(self, msg):
-        if msg == "CLOSE":
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key.Key_Return:
             self.close()
-
-    def handleKeyEvent(self, char, event):
-        if event == aitpi.BUTTON_PRESS:
-            if char == pynput.keyboard.Key.enter:
-                self.msgQt("CLOSE")
 
     def changeDev(self, dev):
         self.device = dev

@@ -3,12 +3,11 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, Q
 from PySide6.QtCore import QTimer
 from ..widgets.item_scroll_view import ItemScrollView
 from ..inputless_combo import InputlessCombo
-from ..aitpi.src import aitpi
-from ..aitpi_signal import AitpiSignal
 import pynput
 from .popup import Popup
 from .. import common_css
 from ..widgets.custom_button import ImpPushButton
+from PySide6.QtCore import Qt
 
 class SingleSelectPopup(Popup):
     def __init__(self, doneFun, name, items, devices, parent: QWidget = None):
@@ -63,35 +62,26 @@ class SingleSelectPopup(Popup):
         self.mainLayout.addWidget(button)
         self.setLayout(self.mainLayout)
 
-    # Required to allow us to handle on a QT thread
-    def consume(self, msg):
-        event, value = msg
-        if event == "CLOSE":
-            self.index = value
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key.Key_Down:
+            idx = None
+            if self.index is None:
+                idx = 0
+            else:
+                idx = (self.index + 1) % len(self.items)
+            self.setIndex(idx)
+        elif key == Qt.Key.Key_Up:
+            idx = None
+            if self.index is None:
+                idx = 0
+            else:
+                idx = self.index - 1
+                if idx < 0:
+                    idx = len(self.items) - 1
+            self.setIndex(idx)
+        elif key == Qt.Key.Key_Return:
             self.close()
-        else:
-            self.setIndex(value)
-
-    def handleKeyEvent(self, char, event):
-        if event == aitpi.BUTTON_PRESS:
-            if char == pynput.keyboard.Key.down: #event.key() == 0x01000013: # Up
-                idx = None
-                if self.index is None:
-                    idx = 0
-                else:
-                    idx = (self.index + 1) % len(self.items)
-                self.msgQt(("INDEX", idx))
-            elif char == pynput.keyboard.Key.up:
-                idx = None
-                if self.index is None:
-                    idx = 0
-                else:
-                    idx = self.index - 1
-                    if idx < 0:
-                        idx = len(self.items) - 1
-                self.msgQt(("INDEX", idx))
-            elif char == pynput.keyboard.Key.enter: # event.key() == 0x01000004 or event.key() == 0x01000005: # Enter or return
-                self.msgQt(("CLOSE", self.index))
 
     def setIndex(self, idx):
         if idx == self.index:

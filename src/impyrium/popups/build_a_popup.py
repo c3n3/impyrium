@@ -3,9 +3,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, Q
 from PySide6.QtCore import QTimer, Qt
 from ..widgets.item_scroll_view import ItemScrollView
 from ..inputless_combo import InputlessCombo
-from ..aitpi.src import aitpi
 from .. import common_css
-from ..aitpi_signal import AitpiSignal, AitpiSignalExecutor
 import pynput
 from .popup import Popup
 
@@ -228,15 +226,15 @@ class BuildAPopup(Popup):
         self.devIndex = index
         self.update()
 
-    # Required to allow us to handle on a QT thread
-    def consume(self, msg):
-        if msg == "CLOSE":
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key.Key_Return:
             self.shouldReturnValue = True
             self.close()
-        if msg == "CLOSE_NO_RESULT":
+        elif key == Qt.Key.Key_Escape:
             self.shouldReturnValue = False
             self.close()
-        if msg == "SHIFT_FOCUS":
+        elif key == Qt.Key.Key_Tab:
             startFocus = self.focusIdx
             self.focusIdx += 1
             if self.focusIdx >= len(self.components):
@@ -244,16 +242,6 @@ class BuildAPopup(Popup):
             while issubclass(type(self.components[list(self.components.keys())[self.focusIdx]]), Output) and self.focusIdx != startFocus:
                 self.focusIdx = (self.focusIdx + 1) % len(self.components)
             self.components[list(self.components.keys())[self.focusIdx]].widget.setFocus()
-
-    def handleKeyEvent(self, char, event):
-        if event == aitpi.BUTTON_PRESS:
-            if char == pynput.keyboard.Key.enter:
-                self.msgQt("CLOSE")
-            elif char == pynput.keyboard.Key.esc:
-                self.msgQt("CLOSE_NO_RESULT")
-            elif char == pynput.keyboard.Key.tab:
-                self.msgQt("SHIFT_FOCUS")
-
 
     def changeDev(self, dev):
         self.device = dev
@@ -274,56 +262,3 @@ class BuildAPopup(Popup):
 
         result = self.getResults()
         return dev, result if self.shouldReturnValue else None
-
-if __name__ == '__main__':
-    class TestApp(QMainWindow):
-        def __init__(self):
-            super().__init__()
-
-            self.setWindowTitle("My App")
-            button = QPushButton("Press me for a dialog!")
-            button.clicked.connect(self.button_clicked)
-            self.setCentralWidget(button)
-            self.executor = AitpiSignalExecutor()
-            self.executor.start()
-
-        def signalTimer(self):
-            AitpiSignal.run()
-
-        def addInput(self, t, item):
-            print(t, item)
-
-        def button_clicked(self, s):
-            toolbox = TextOutput("Something")
-            dlg = BuildAPopup(
-                self.addInput,
-                "Something",
-                ["one", "two"],
-                {
-                    "Something": TextInput(valueChangedFun=lambda value: toolbox.setValue(value)),
-                    "Else": SliderInput((0, 100), print),
-                    "Value": toolbox
-                }
-            )
-            value = dlg.popUp()
-            print("BUttont", value)
-
-        def closeEvent(self, event):
-            self.end()
-            event.accept()
-
-        def close(self):
-            self.end()
-            super().close()
-
-        def end(self):
-            self.executor.stop()
-
-    app = QApplication(sys.argv)
-
-    aitpi.TerminalKeyInput.startKeyListener()
-
-    window = TestApp()
-    window.show()
-
-    app.exec()

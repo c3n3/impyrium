@@ -3,8 +3,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, QVBoxLayout, QLabel, QWidget
 from PySide6.QtCore import Qt
 from PySide6 import QtGui
-from ..aitpi.src import aitpi
-from ..aitpi_signal import AitpiSignal, AitpiSignalExecutor
 from .popup import Popup
 from enum import Enum
 
@@ -151,54 +149,3 @@ class StatusSidebar(Popup):
         if len(StatusSidebar.currentBar_.widgets) == 0:
             StatusSidebar.currentBar_.close()
             StatusSidebar.currentBar_= None
-
-if __name__ == '__main__':
-    from ..aitpi_signal import AitpiSignalExecutor
-    class TestApp(QMainWindow):
-        def __init__(self):
-            super().__init__()
-
-            self.setWindowTitle("My App")
-            button = QPushButton("Press me for a dialog!")
-            button.clicked.connect(self.button_clicked)
-            self.setCentralWidget(button)
-            self.executor = AitpiSignalExecutor()
-            self.executor.start()
-            self.dlg = None
-            self.flip = True
-            self.count = 0
-
-        def signalTimer(self):
-            AitpiSignal.run()
-
-        def addInput(self, t, item):
-            print(t, item)
-
-        def button_clicked(self, s):
-            # if self.flip:
-            self.count += 1
-            StatusSidebar.addEntry("Something " + str(self.count), "rgba(255,255,255,1)")
-            # else:
-            #     StatusSidebar.removeEntry("Something")
-
-            self.flip = not self.flip
-
-        def closeEvent(self, event):
-            self.end()
-            event.accept()
-
-        def close(self):
-            self.end()
-            super().close()
-
-        def end(self):
-            StatusSidebar.stop()
-
-    app = QApplication(sys.argv)
-
-    aitpi.TerminalKeyInput.startKeyListener()
-
-    window = TestApp()
-    window.show()
-
-    app.exec()

@@ -1,9 +1,7 @@
-from .aitpi.src import aitpi
-from .aitpi.src.aitpi import router
+import py_global_shortcuts as pygs
 
 from .thread_safe_queue import ThreadSafeQueue
 
-from .aitpi_signal import AitpiSignal
 from . import signals
 
 from .text_display import TextDisplay
@@ -69,8 +67,11 @@ newDeviceFun_ = None
 signal_ = None
 
 class Control():
-    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True, requiredAbilities=set()):
+    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True, requiredAbilities=set(), id=""):
         self.name = name
+        self.id = id
+        if self.id == "":
+            self.id = self.name
         self.sendFun = sendFun
         self.category = category
         self.deviceAutoReserve = deviceAutoReserve
@@ -94,20 +95,22 @@ class Control():
     def enable(self):
         self.enabled = True
 
-    def consume(self, msg):
-        if self.enabled:
-            self.handleAitpi(msg)
-
     def handleGuiEvent(self, event, devList):
         if self.enabled:
             self.sendFun(self, event, devList)
 
-    def handleAitpi(self, msg):
-        if (msg.name == self.name):
-            e = ControlEvents.BUTTON_PRESS
-            if msg.event == aitpi.BUTTON_RELEASE:
-                e = ControlEvents.BUTTON_RELEASE
-            self.sendFun(self, e, DeviceType.getControlDevList(self))
+    def execute(self):
+        self.sendFun(self, ControlEvents.BUTTON_PRESS, DeviceType.getControlDevList(self))
+
+    def getId(self):
+        return f"{self.category}::{self.id}"
+
+    @staticmethod
+    def parseId(idStr: str):
+        parts = idStr.split("::")
+        if len(parts) != 2:
+            return None, None
+        return parts[0], parts[1]
 
 class ControlButton(Control):
     pass #Base Control() is a button
@@ -134,22 +137,15 @@ class ControlFile(Control):
 
     def requestFile(self):
         TextDisplay.print("Requesting file")
-        AitpiSignal.send(signals.GET_FILE, {
-            "fun": self.runCallback,
-            "types": self.allFiles,
-            "directory": self.dir,
-        })
+        helpers.getFileConsumer(self.runCallback, self.dir, self.allFiles)
 
     def handleGuiEvent(self, event, devList):
         if event == ControlEvents.BUTTON_PRESS:
             return
         self.requestFile()
 
-    def handleAitpi(self, msg):
-        if msg.event == aitpi.BUTTON_PRESS:
-            return
-        if (msg.name == self.name):
-            self.requestFile()
+    def execute(self):
+        self.requestFile()
 
 class ControlString(Control):
     pass #TODO:
@@ -180,23 +176,15 @@ class ControlSelector(ControlButton):
         TextDisplay.print("Popping up selection")
         if devices is None or len(devices) == 0:
             devices = DeviceType.getAllPossibleControlDevList(self)
-        AitpiSignal.send(signals.SELECT_ITEM, {
-            "items": self.items,
-            "name": self.name,
-            "fun": self.runCallback,
-            "devices": devices,
-        })
+        helpers.selectItemPopup(self.runCallback, self.items, self.name, devices)
 
     def handleGuiEvent(self, event, devList):
         if event == ControlEvents.BUTTON_PRESS:
             return
         self.requestSelection(devList)
 
-    def handleAitpi(self, msg):
-        if msg.event == aitpi.BUTTON_PRESS:
-            return
-        if (msg.name == self.name):
-            self.requestSelection()
+    def execute(self):
+        self.requestSelection()
 
 class ControlBuildAPopup(ControlButton):
     def __init__(self, category, name, sendFun, componentsFun, deviceAutoReserve=False, enabled=True):
@@ -220,23 +208,15 @@ class ControlBuildAPopup(ControlButton):
     def requestPopup(self, devices=None):
         if devices is None or len(devices) == 0:
             devices = DeviceType.getAllPossibleControlDevList(self)
-        AitpiSignal.send(signals.CUSTOM_POPUP, {
-            "components": self.componentsFun(),
-            "name": self.name,
-            "fun": self.runCallback,
-            "devices": devices,
-        })
+        helpers.buildPopupConsumer(self.runCallback, self.name, self.componentsFun(), devices)
 
     def handleGuiEvent(self, event, devList):
         if event == ControlEvents.BUTTON_PRESS:
             return
         self.requestPopup(devList)
 
-    def handleAitpi(self, msg):
-        if msg.event == aitpi.BUTTON_PRESS:
-            return
-        if (msg.name == self.name):
-            self.requestPopup()
+    def execute(self):
+        self.requestPopup()
 
 class ControlSlider(Control):
     def __init__(self, category, name, sendFun, sliderRange : RangeValue, deviceAutoReserve=False, enabled=True, requiredAbilities=set()) -> None:
@@ -263,17 +243,18 @@ class ControlSlider(Control):
     def getValue(self):
         return self.range.getValue()
 
-    def handleAitpi(self, msg):
-        if (msg.name == self.name):
-            e = ControlEvents.VALUE_SET
-            if msg.event == aitpi.ENCODER_LEFT:
-                self.range.left()
-            elif msg.event == aitpi.ENCODER_RIGHT:
-                self.range.right()
-            else:
-                raise Exception(f"Invalid aitpi command {msg.event}")
+    def execute(self):
+        pass
+        # if (msg.name == self.name):
+        #     e = ControlEvents.VALUE_SET
+        #     if msg.event == aitpi.ENCODER_LEFT:
+        #         self.range.left()
+        #     elif msg.event == aitpi.ENCODER_RIGHT:
+        #         self.range.right()
+        #     else:
+        #         raise Exception(f"Invalid aitpi command {msg.event}")
 
-            self.sendFun(self, e, DeviceType.getControlDevList(self))
+        #     self.sendFun(self, e, DeviceType.getControlDevList(self))
 
 # Simple helper class that defines a devices unique id, and stores reservation state
 class Device():
@@ -416,7 +397,7 @@ class DeviceType():
         return ret
 
     def sendUpdateSignal(self):
-        AitpiSignal.send(signals.DEVICE_LIST_UPDATE, self.devices)
+        helpers.sendUpdateDeviceListSignal()
 
     def detect(self):
         global signal_
@@ -483,7 +464,7 @@ class DeviceType():
         return ret
 
     @staticmethod
-    def getControlDevList(ctrl, shouldAutoReserve=True):
+    def getControlDevList(ctrl: Control, shouldAutoReserve=True):
         devices = set()
         for t in DeviceType.getAllDeviceTypes(ctrl.category):
             if ctrl.deviceAutoReserve and shouldAutoReserve:
@@ -492,7 +473,7 @@ class DeviceType():
         return devices
 
     @staticmethod
-    def getAllPossibleControlDevList(ctrl):
+    def getAllPossibleControlDevList(ctrl: Control):
         devices = set()
         for t in DeviceType.getAllDeviceTypes(ctrl.category):
             devices.update(t.getAllDevices(ctrl.requiredAbilities))
@@ -508,20 +489,14 @@ def getControls() -> Dict[str, List[Control]]:
     global controls_
     return controls_
 
-def init():
-    # We use a None registry to add controls
-    aitpi.addRegistry(None)
-
-def addToAitpi(control):
-    aitpi.addCommandToRegistry(None, control.name, control.category, control.inputType)
-    router.addConsumer([control.category], control)
-
 def registerControl(control: Control):
     global controls_
     if (control.category not in controls_):
         controls_[control.category] = []
     controls_[control.category].append(control)
-    addToAitpi(control)
+
+    binder = pygs.get_binder()
+    binder.register_command(pygs.Command(control.getId(), control.execute, name=control.name))
 
 def getControlsForDevice(device : Device):
     global controls_

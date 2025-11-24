@@ -3,17 +3,13 @@ import time
 
 from .popups.status_sidebar import StatusSidebar
 
-from .aitpi.src.aitpi import router
-from .aitpi.src import aitpi
-
-from .aitpi_signal import AitpiSignalExecutor
 from typing import Tuple
-
+from . import control
+import py_global_shortcuts as pygs
 from . import helpers
-from .aitpi_signal import AitpiSignal
 from . import signals
 from .thread_safe_queue import ThreadSafeQueue
-from .aitpi_widget import Aitpi
+from .keybinding_widget import KeybindingWidget
 from . import device_thread
 from .widgets.main_impyrium import MainImpyrium
 import os
@@ -38,37 +34,6 @@ from PySide6.QtWidgets import (
 
 from .popups.single_select_popup import SingleSelectPopup
 
-def getFileConsumer(msg):
-    fun = msg['fun']
-    directory = msg['directory']
-    types = msg['types']
-    file = helpers.getFileFromDialog(types, directory)
-    fun(file)
-
-def selectItemConsumer(msg):
-    fun = msg['fun']
-    items = msg['items']
-    name = msg['name']
-    devices = msg['devices']
-    dialog = SingleSelectPopup(fun, name, items, devices)
-    devs, res = dialog.popUp()
-    fun((devs, res))
-
-def buildPopupConsumer(msg):
-    fun = msg['fun']
-    name = msg['name']
-    components = msg['components']
-    devices = msg['devices']
-    dialog = build_a_popup.BuildAPopup(fun, name, devices, components)
-    devs, res = dialog.popUp()
-    fun((devs, res))
-
-def addStatusEntry(msg):
-    action, text = msg
-    if action == "REMOVE":
-        StatusSidebar.removeEntry(text)
-    elif action == "ADD":
-        StatusSidebar.addEntry(text)
 
 def getScriptPath():
     return os.path.dirname(os.path.realpath(__file__)).replace(os.path.basename(__file__), "")
@@ -77,12 +42,6 @@ def printAllOfType(item, t):
     for d in dir(item):
         if (type(item.__getattribute__(d)) == t):
             print(d)
-
-def init():
-    router.addConsumer([signals.GET_FILE], getFileConsumer)
-    router.addConsumer([signals.SELECT_ITEM], selectItemConsumer)
-    router.addConsumer([signals.ADD_SIDEBAR_STATUS_ENTRY], addStatusEntry)
-    router.addConsumer([signals.CUSTOM_POPUP], buildPopupConsumer)
 
 class SuperWindow(QWidget):
     def __init__(self, minsize: Tuple[int, int] = None):
@@ -107,14 +66,13 @@ class MainWindow(QMainWindow):
             self.setMinimumSize(800, 500)
         self.fileCallback = None
         self.selectedDevice = None
-        self.signalExec = AitpiSignalExecutor()
-        self.signalExec.start()
 
         # None registry is the control box
-        commands = aitpi.getCommandsByRegistry(None)
+        commands = pygs.get_binder().get_commands()
         categories = set()
         for c in commands:
-            categories.add(c['id'])
+            cat, idstr = control.Control.parseId(c.cmd_id)
+            categories.add(cat)
 
         if logo is not None:
             self.setWindowIcon(QtGui.QIcon(logo()))
@@ -133,15 +91,6 @@ class MainWindow(QMainWindow):
             self.setCentralWidget(self.mainImpyrium)
 
         self.isLinux = sys.platform.startswith('linux')
-
-
-    def keyPressEvent(self, event):
-        if self.isLinux:
-            aitpi.pyqt6KeyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        if self.isLinux:
-            aitpi.pyqt6KeyReleaseEvent(event)
 
     def closeEvent(self, event):
         self.end()

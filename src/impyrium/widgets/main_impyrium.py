@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 from .item_scroll_view import ItemScrollView
 from .custom_button import ImpPushButton
 from .. import signals
-from ..aitpi.src.aitpi import router
+from .. import router
 from PySide6.QtCore import Qt
 from .. import common_css
 from typing import List
@@ -22,8 +22,9 @@ import PySide6
 from .control_menu import ControlsTypeSection
 from ..text_display import TextDisplay
 from .. import helpers
-from ..aitpi_widget import Aitpi
+from ..keybinding_widget import KeybindingWidget
 from typing import Dict, Callable, List
+from .. import work_queue
 
 class DeviceList(QScrollArea):
     _deviceSelectFuns = []
@@ -205,6 +206,8 @@ class DeviceListDock(QDockWidget):
 class MainImpyrium(QWidget):
     def __init__(self, categories, parent=None):
         super().__init__(parent)
+        self.exec = work_queue.WorkQueueExecutor()
+        self.exec.start()
 
         view2 = ItemScrollView([ControlsTypeSection(cat, True) for cat in categories])
         view2.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
@@ -225,7 +228,7 @@ class MainImpyrium(QWidget):
         tabwidget.addTab(self.currentControlList, "Single Device")
         tabwidget.addTab(view2, "Global")
         tabwidget.setCurrentIndex(1)
-        tabwidget.addTab(Aitpi(self), "Keyboard Shortcuts")
+        tabwidget.addTab(KeybindingWidget(self), "Keyboard Shortcuts")
 
         tabwidget.setStyleSheet(common_css.TAB_STYLE)
 

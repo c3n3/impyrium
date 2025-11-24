@@ -83,7 +83,7 @@ app = QApplication(sys.argv)
 window = MainWindow()
 
 def runAlways():
-    window.queue.put(QueueItem(lambda arg: print("Something happened"), None))    
+    window.queue.put(QueueItem(lambda arg: print("Something happened"), None))
     worker.scheduleItem(1, runAlways)
 
 runAlways()

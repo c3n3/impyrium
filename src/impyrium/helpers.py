@@ -1,11 +1,14 @@
 from .default_files import defaults
 from .default_files.ahk_get_file_script import ahkGetFile
 from . import signals
-from .aitpi_signal import AitpiSignal
 from . import images
 from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtCore import QByteArray
+from . import work_queue, router
+from .popups.single_select_popup import SingleSelectPopup
+from .popups import build_a_popup
+from .popups.status_sidebar import StatusSidebar 
 
 import os
 
@@ -37,10 +40,10 @@ def getFileFromDialog(types, directory):
     return file
 
 def addStatusEntry(text):
-    AitpiSignal.send(signals.ADD_SIDEBAR_STATUS_ENTRY, ("ADD", text))
+    work_queue.schedule(lambda: StatusSidebar.addEntry(text))
 
 def removeStatusEntry(text):
-    AitpiSignal.send(signals.ADD_SIDEBAR_STATUS_ENTRY, ("REMOVE", text))
+    work_queue.schedule(lambda: StatusSidebar.removeEntry(text))
 
 def getImageForPyQt(imageCodeName: str):
     img = images.getFileInBase64(imageCodeName)
@@ -61,3 +64,27 @@ def isWayland():
     if os.name != 'posix':
         return False
     return os.environ.get('XDG_SESSION_TYPE') == 'wayland'
+
+def getFileConsumer(fun, directory, types):
+    def work():
+        file = getFileFromDialog(types, directory)
+        fun(file)
+    work_queue.schedule(work)
+
+
+def selectItemPopup(fun, items, name, devices):
+    def work():
+        dialog = SingleSelectPopup(fun, name, items, devices)
+        devs, res = dialog.popUp()
+        fun((devs, res))
+    work_queue.schedule(work)
+
+def buildPopupConsumer(fun, name, components, devices):
+    def work():
+        dialog = build_a_popup.BuildAPopup(fun, name, devices, components)
+        devs, res = dialog.popUp()
+        fun((devs, res))
+    work_queue.schedule(work)
+
+def sendUpdateDeviceListSignal():
+    work_queue.schedule(lambda: router.send(signals.DEVICE_LIST_UPDATE, None))

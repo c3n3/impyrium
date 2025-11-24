@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QApplication, QDialog, QMainWindow, QPushButton, Q
 
 from . import common_css
 
-from .aitpi.src.aitpi.pyqt6_key_map import pyqt6Map
+from .pyqt6_key_map import pyqt6Map
 
 from .inputless_combo import InputlessCombo
 
@@ -25,47 +25,27 @@ class KeyComboDialog(QDialog):
             ret.setMinimumWidth(200)
             return ret
 
-        self.results = [createResultLabel(), createResultLabel()]
+        self.results = createResultLabel()
 
-        self.combo = InputlessCombo(self)
-        self.combo.addItem('button')
-        self.combo.addItem('encoder')
         self.type = 'button'
-        self.combo.currentIndexChanged.connect(self.changeType)
-        self.comboLabel = QLabel("Set combo type")
-        self.comboLabel.setBuddy(self.combo)
-
         self.resultWidget = QWidget()
         self.resultLayout = QHBoxLayout()
-        self.resultLayout.addWidget(self.results[0])
+        self.resultLayout.addWidget(self.results)
         self.resultWidget.setLayout(self.resultLayout)
 
 
         self.mainLayout.addWidget(self.instructions)
-        self.mainLayout.addWidget(self.comboLabel)
-        self.mainLayout.addWidget(self.combo)
         self.mainLayout.addWidget(self.resultWidget)
 
         self.setLayout(self.mainLayout)
-        self.keysList = [set(), set()]
+        self.keysList = set()
         self.pressed = set()
         self.keysIndex = 0
 
 
-    def changeType(self, index):
-        if index == 0:
-            self.type = 'button'
-            self.results[1].setText("")
-            self.resultLayout.removeWidget(self.results[1])
-        elif index == 1:
-            self.type = 'encoder'
-            self.resultLayout.addWidget(self.results[1])
-
-        self.update()
-
-    def getString(self, index):
+    def getString(self):
         keylist = []
-        for key in self.keysList[index]:
+        for key in self.keysList:
             if key is None:
                 continue
             elif (hasattr(key, 'char')):
@@ -78,25 +58,17 @@ class KeyComboDialog(QDialog):
 
     def keyPressEvent(self, event):
         self.pressed.add(pyqt6Map[event.key()])
-        self.keysList[self.keysIndex].add(pyqt6Map[event.key()])
-        self.results[self.keysIndex].setText(self.getString(self.keysIndex))
+        self.keysList.add(pyqt6Map[event.key()])
+        self.results.setText(self.getString())
         self.update()
 
     def keyReleaseEvent(self, event):
         if pyqt6Map[event.key()] in self.pressed:
             self.pressed.remove(pyqt6Map[event.key()])
-        if len(self.keysList[self.keysIndex]) == 0:
+        if len(self.keysList) == 0:
             return
-        if len(self.pressed) == 0 and self.type == 'button':
-            self.doneFun(self.type, [self.getString(0)])
-            self.close()
-        if len(self.pressed) == 0 and self.type == 'encoder':
-            if self.keysIndex == 1:
-                self.doneFun(self.type, [self.getString(0), self.getString(1)])
-                self.close()
-                self.keysIndex = 0
-            else:
-                self.keysIndex += 1
+        self.doneFun(self.getString())
+        self.close()
 
 
 if __name__ == '__main__':

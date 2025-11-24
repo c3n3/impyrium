@@ -1,15 +1,9 @@
-import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QSlider
 from PySide6.QtGui import QPixmap
-from PySide6 import QtGui
 from PySide6.QtCore import QTimer, Qt
-import PySide6
 from ..widgets.item_scroll_view import ItemScrollView
 from ..inputless_combo import InputlessCombo
-from ..aitpi.src import aitpi
 from .. import common_css
-from ..aitpi_signal import AitpiSignal, AitpiSignalExecutor
-import pynput
 from .popup import Popup
 import os
 

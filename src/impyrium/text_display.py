@@ -1,6 +1,5 @@
-from .aitpi_signal import AitpiSignal
 from . import signals
-from .aitpi.src.aitpi import router
+from . import work_queue
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -49,6 +48,7 @@ class ScrollLabel(QScrollArea):
         self.label.setText(text)
 
 class TextDisplay(QWidget):
+    _textDisplays: list["TextDisplay"] = []
     def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
         self.label = ScrollLabel(self)
@@ -58,9 +58,9 @@ class TextDisplay(QWidget):
         self.setMinimumSize(250, 10)
         self.msgs = []
         self.startTime = time.time()
-        router.addConsumer(signals.PRINT_TO_TEXT_DISPLAY, self)
+        TextDisplay._textDisplays.append(self)
 
-    def consume(self, msg):
+    def addMessage(self, msg):
         if len(self.msgs) > 100:
             self.msgs.pop(0)
         self.msgs.append(msg)
@@ -90,4 +90,8 @@ class TextDisplay(QWidget):
 
         send = (time.time(), timeString, contents)
 
-        AitpiSignal.send(signals.PRINT_TO_TEXT_DISPLAY, send)
+        def updateAllDisplays(message):
+            for disp in TextDisplay._textDisplays:
+                disp.addMessage(message)
+
+        work_queue.schedule(lambda: updateAllDisplays(send))

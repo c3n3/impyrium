@@ -1,14 +1,8 @@
-import sys
-
+import py_global_shortcuts as pygs
 from . import control
 from . import device_thread
 from . import main_menu
 from . import default_files
-
-from PySide6.QtWidgets import QApplication, QWidget
-from .aitpi.src.aitpi import router
-from .aitpi.src import aitpi
-from .main_menu import MainWindow
 from . import main_menu
 from . import worker_thread
 
@@ -16,6 +10,7 @@ from . import worker_thread
 import os
 import json
 
+PYGS_APPNAME = "impyrium_app"
 _tempFolder = None
 _inputsFile = None
 _registryFile = None
@@ -31,11 +26,11 @@ def init(tempFolder, inputsFile=None, registryFile=None, folderCommands=None):
     _registryFile = registryFile
     _folderCommands = folderCommands
 
-    control.init()
+    pygs.init(PYGS_APPNAME, cache_dir=_tempFolder)
+
     device_thread.start()
 
     default_files.writeFiles(_tempFolder, False)
-    main_menu.init()
 
 def start():
     global _inputsFile
@@ -57,10 +52,6 @@ def start():
             f = open(defaultRegistryFile, "w")
             json.dump([], f)
             f.close()
-
-    aitpi.addRegistry(_registryFile, _folderCommands)
-    aitpi.initInput(_inputsFile)
-    aitpi.TerminalKeyInput.startKeyListener()
 
 def stop():
     device_thread.stop()
