@@ -8,7 +8,6 @@ from PySide6.QtCore import QByteArray
 from . import work_queue, router
 from .popups.single_select_popup import SingleSelectPopup
 from .popups import build_a_popup
-from .popups.status_sidebar import StatusSidebar 
 
 import os
 
@@ -38,12 +37,6 @@ def getFileFromDialog(types, directory):
         f"{types};;"
     )
     return file
-
-def addStatusEntry(text):
-    work_queue.schedule(lambda: StatusSidebar.addEntry(text))
-
-def removeStatusEntry(text):
-    work_queue.schedule(lambda: StatusSidebar.removeEntry(text))
 
 def getImageForPyQt(imageCodeName: str):
     img = images.getFileInBase64(imageCodeName)

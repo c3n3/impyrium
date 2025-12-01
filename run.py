@@ -31,7 +31,7 @@ def otherDevices():
         ret.append(control.Device(f"{i} Other", "Other device"))
     return ret
 
-
+pygs.init(PYGS_APPNAME, cache_dir="./temp")
 impyrium.init("./temp", "./test_json/registry.json", "./test_json/folder_commands.json")
 
 # Add all controls and devices

@@ -1,8 +1,6 @@
 import sys
 import time
 
-from .popups.status_sidebar import StatusSidebar
-
 from typing import Tuple
 from . import control
 import py_global_shortcuts as pygs
@@ -93,12 +91,7 @@ class MainWindow(QMainWindow):
         self.isLinux = sys.platform.startswith('linux')
 
     def closeEvent(self, event):
-        self.end()
         event.accept()
 
     def close(self):
-        self.end()
         super().close()
-
-    def end(self):
-        StatusSidebar.stop()

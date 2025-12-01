@@ -100,7 +100,9 @@ class Control():
             self.sendFun(self, event, devList)
 
     def execute(self):
-        self.sendFun(self, ControlEvents.BUTTON_PRESS, DeviceType.getControlDevList(self))
+        if not self.enabled:
+            return
+        self.sendFun(self, ControlEvents.BUTTON_RELEASE, DeviceType.getControlDevList(self))
 
     def getId(self):
         return f"{self.category}::{self.id}"
@@ -353,7 +355,7 @@ class DeviceType():
         self.autoReservationTimeout = autoReservationTimeout
         self.ownsDevice = False
         self.reservedDevices = set()
-        self.devices = set()
+        self.devices: typing.Set[Device] = set()
 
     def hasCategory(self, category):
         return category in self.controlCategories
@@ -417,7 +419,7 @@ class DeviceType():
         if self.detector is not None:
             device_thread.scheduleItem(self.pollRate, self.detect)
 
-    def scheduleAutoTimeout(self, device):
+    def scheduleAutoTimeout(self, device: Device):
         if device.reserveTask is not None:
             device_thread.cancel(device.reserveTask)
             device.reserveTask = None
@@ -427,7 +429,7 @@ class DeviceType():
     def checkReservations(self):
         self.reservedDevices.difference_update(self.reservedDevices - self.devices)
 
-    def releaseDevice(self, device):
+    def releaseDevice(self, device: Device):
         if (self.releaseDeviceFun is not None):
             device.reserveTask = None
             if (self.reserveCheck is not None and not self.reserveCheck(device)):
@@ -438,7 +440,7 @@ class DeviceType():
                 self.reservedDevices.remove(device)
                 self.sendUpdateSignal()
 
-    def reserveDevice(self, device, autoReserve=False):
+    def reserveDevice(self, device: Device, autoReserve=False):
         if (self.reserveDeviceFun is not None):
             self.reserveDeviceFun(device)
             self.reservedDevices.add(device)
@@ -455,7 +457,7 @@ class DeviceType():
         return ret
 
     @staticmethod
-    def getAllDeviceTypes(category):
+    def getAllDeviceTypes(category) -> typing.List["DeviceType"]:
         ret = []
         for key in DeviceType._deviceTypes.keys():
             t = DeviceType._deviceTypes[key]
@@ -464,7 +466,7 @@ class DeviceType():
         return ret
 
     @staticmethod
-    def getControlDevList(ctrl: Control, shouldAutoReserve=True):
+    def getControlDevList(ctrl: Control, shouldAutoReserve=True) -> typing.Set[Device]:
         devices = set()
         for t in DeviceType.getAllDeviceTypes(ctrl.category):
             if ctrl.deviceAutoReserve and shouldAutoReserve:
@@ -473,7 +475,7 @@ class DeviceType():
         return devices
 
     @staticmethod
-    def getAllPossibleControlDevList(ctrl: Control):
+    def getAllPossibleControlDevList(ctrl: Control) -> typing.Set[Device]:
         devices = set()
         for t in DeviceType.getAllDeviceTypes(ctrl.category):
             devices.update(t.getAllDevices(ctrl.requiredAbilities))
@@ -503,5 +505,4 @@ def getControlsForDevice(device : Device):
     ret = {}
     for cat in device.deviceType.getControlCategories():
         ret[cat] = list(controls_[cat])
-
     return ret
