@@ -39,6 +39,7 @@ impyrium.init("./temp", "./test_json/registry.json", "./test_json/folder_command
 def doSomething(ctrl: control.Control, event, devlist: list[control.Device]):
     print("Got", ctrl.name, "with", event, devlist)
 
+control.registerControl(control.ControlSelector("Selector", "Selector0", doSomething, ["1", "2", "3"]))
 control.registerControl(control.ControlButton("Category1", "Control1", doSomething))
 control.registerControl(control.ControlButton("Category1", "Control2", doSomething))
 control.registerControl(control.ControlButton("Category1", "Control3", doSomething))

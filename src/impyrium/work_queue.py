@@ -66,11 +66,15 @@ class WorkQueue():
     @staticmethod
     def run():
         now = int(time.time() * 1000)
+        itemToExec = []
         WorkQueue.lock.acquire()
         while len(WorkQueue.allItems) > 0 and WorkQueue.allItems[0].timetoexec <= now:
             item = WorkQueue.allItems.pop(0)
-            item.exec()
+            if item is not None:
+                itemToExec.append(item)
         WorkQueue.lock.release()
+        for item in itemToExec:
+            item.exec()
 
 def cancel(itemId: int):
     return WorkQueue.cancel(itemId)
