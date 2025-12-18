@@ -1,19 +1,21 @@
 from ..worker_thread import WorkerThread
 from .. import control
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSlider
 from PySide6.QtCore import Qt
 from .custom_button import ImpPushButton
 
 class ControlsScrollView(QWidget):
-    def __init__(self, category, autoReserve, abilities=set()):
+    def __init__(self, category, autoReserve, abilities=set(), onControlDeleted=None):
         super(ControlsScrollView, self).__init__()
-        layout = QVBoxLayout(self)
+        self.layout = QVBoxLayout(self)
         self.autoReserve = autoReserve
-        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.onControlDeleted = onControlDeleted
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         controls = control.getControls()
         self.worker = WorkerThread()
         self.worker.start()
         self.count = 0
+        self.category = category
         if category in controls:
             for c in controls[category]:
                 mod = self.getObjectMod(c)
@@ -21,7 +23,7 @@ class ControlsScrollView(QWidget):
                     print(f"Mod is None for {c.name}, cannot do anything with this, please fix")
                     continue
                 for item in mod:
-                    layout.addWidget(item)
+                    self.layout.addWidget(item)
                     if not c.enabled or (not c.getRequiredAbilities().issubset(abilities) and not autoReserve):
                         item.hide()
                     else:
@@ -47,15 +49,61 @@ class ControlsScrollView(QWidget):
                 ctrl.data['event'] = self.worker.scheduleItem(0.5, item)
         return fun
 
+    def generateDeleteCallback(self, ctrl, container_widget):
+        """Generate a callback to delete a control."""
+        def fun():
+            # Call the control's onDelete callback if provided
+            if ctrl.onDelete:
+                ctrl.onDelete(ctrl)
+
+            # Unregister the control
+            control.unregisterControl(ctrl)
+
+            # Remove the widget from the layout
+            container_widget.setParent(None)
+            container_widget.deleteLater()
+
+            # Update count
+            self.count -= 1
+
+            # Notify parent if callback provided
+            if self.onControlDeleted:
+                self.onControlDeleted(ctrl)
+        return fun
+
     def getObjectMod(self, ctrl):
         if type(ctrl) == control.ControlButton or type(ctrl) == control.ControlFile or issubclass(type(ctrl), control.ControlButton):
-            button = ImpPushButton()
-            button.setMinimumHeight(25)
-            button.setText(ctrl.name)
-            button.pressed.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_PRESS))
-            button.released.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_RELEASE))
-            # button.setStyleSheet(f"QWidget{{ border-bottom: 1px solid grey; }} {common_css.HOVER_EFFECT}")
-            return [button]
+            # If deletable, wrap in a container with delete button
+            if ctrl.deletable:
+                container = QWidget()
+                layout = QHBoxLayout(container)
+                layout.setContentsMargins(0, 0, 0, 0)
+                layout.setSpacing(2)
+
+                button = ImpPushButton()
+                button.setMinimumHeight(25)
+                button.setText(ctrl.name)
+                button.pressed.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_PRESS))
+                button.released.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_RELEASE))
+
+                delete_button = ImpPushButton()
+                delete_button.setText("✕")
+                delete_button.setFixedWidth(25)
+                delete_button.setMinimumHeight(25)
+                delete_button.setToolTip(f"Delete '{ctrl.name}'")
+                delete_button.setStyleSheet("QPushButton { color: red; font-weight: bold; }")
+                delete_button.clicked.connect(self.generateDeleteCallback(ctrl, container))
+
+                layout.addWidget(button, stretch=1)
+                layout.addWidget(delete_button, stretch=0)
+                return [container]
+            else:
+                button = ImpPushButton()
+                button.setMinimumHeight(25)
+                button.setText(ctrl.name)
+                button.pressed.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_PRESS))
+                button.released.connect(self.generateButtonCallbackFun(ctrl, control.ControlEvents.BUTTON_RELEASE))
+                return [button]
         if type(ctrl) == control.ControlSlider:
             ret = QSlider(Qt.Orientation.Horizontal)
             res = ctrl.generateSliderValues()

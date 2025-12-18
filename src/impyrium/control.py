@@ -67,7 +67,7 @@ newDeviceFun_ = None
 signal_ = None
 
 class Control():
-    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True, requiredAbilities=set(), id=""):
+    def __init__(self, category, name, sendFun, deviceAutoReserve=False, enabled=True, requiredAbilities=set(), id="", deletable=False, onDelete=None):
         self.name = name
         self.id = id
         if self.id == "":
@@ -80,6 +80,8 @@ class Control():
         self.inputType = "button"
         self.enabled = enabled
         self.requiredAbilities = requiredAbilities
+        self.deletable = deletable
+        self.onDelete = onDelete
         if type(self.requiredAbilities) != set:
             self.requiredAbilities = set(self.requiredAbilities)
 
@@ -499,6 +501,33 @@ def registerControl(control: Control):
 
     binder = pygs.get_binder()
     binder.register_command(pygs.Command(control.getId(), control.execute, name=control.name))
+
+def unregisterControl(ctrl: Control):
+    """
+    Unregister a control and remove all associated keybindings.
+
+    Args:
+        ctrl: The control to unregister
+    """
+    global controls_
+
+    # Remove from controls list
+    if ctrl.category in controls_:
+        if ctrl in controls_[ctrl.category]:
+            controls_[ctrl.category].remove(ctrl)
+
+    # Remove command and associated keybindings from pygs
+    binder = pygs.get_binder()
+    ctrl_id = ctrl.getId()
+
+    # Remove the command from all keybindings that reference it
+    for binding in binder.get_key_bindings():
+        if binding.has_command(ctrl_id):
+            binder.unlink_command(binding.shortcut, ctrl_id)
+
+    # Remove the command itself
+    if ctrl_id in binder.commands:
+        del binder.commands[ctrl_id]
 
 def getControlsForDevice(device : Device):
     global controls_
